@@ -13,6 +13,7 @@ The server is adapter-agnostic; it is handed one or more ChannelAdapters.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from dataclasses import dataclass, field
 
@@ -166,12 +167,30 @@ class GatewayServer:
         await adapter.send(OutboundMessage(msg.user_id, message))
 
     async def run(self) -> None:
-        import asyncio
+        """Run every adapter with automatic reconnection. A dropped connection
+        (websocket close, network blip) restarts that adapter with capped
+        exponential backoff instead of killing the whole gateway."""
 
         async def bind(adapter: ChannelAdapter) -> None:
             async def handler(m: InboundMessage) -> None:
                 await self.handle(adapter, m)
 
-            await adapter.start(handler)
+            backoff = 1.0
+            while True:
+                try:
+                    await adapter.start(handler)
+                    # A clean return means the adapter stopped intentionally.
+                    return
+                except asyncio.CancelledError:
+                    raise
+                except Exception as exc:  # noqa: BLE001 - resilience wrapper
+                    _log.warning(
+                        "%s adapter hata verdi, %.0fs sonra yeniden bağlanılıyor: %s",
+                        adapter.name,
+                        backoff,
+                        exc,
+                    )
+                    await asyncio.sleep(backoff)
+                    backoff = min(backoff * 2, 60.0)
 
         await asyncio.gather(*(bind(a) for a in self.adapters.values()))

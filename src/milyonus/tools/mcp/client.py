@@ -40,7 +40,7 @@ class MCPClient:
             {
                 "protocolVersion": _PROTOCOL_VERSION,
                 "capabilities": {},
-                "clientInfo": {"name": "milyonus", "version": "0.1.0"},
+                "clientInfo": {"name": "milyonus", "version": "5.5.0"},
             },
         )
         await self._notify("notifications/initialized", {})

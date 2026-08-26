@@ -98,3 +98,28 @@ async def test_allow_all_bypasses_pairing(tmp_path):
     srv.provider = ScriptedProvider("cevap")
     await srv.handle(adapter, InboundMessage("telegram", "u2", "selam"))
     assert any("cevap" in m.text for m in adapter.sent)
+
+
+async def test_run_reconnects_on_failure(tmp_path, monkeypatch):
+    """A failing adapter is retried with backoff, not fatal to the gateway."""
+    adapter = FakeAdapter()
+    srv = _server(tmp_path, adapter)
+
+    calls = {"n": 0}
+
+    async def flaky_start(handler):
+        calls["n"] += 1
+        if calls["n"] < 3:
+            raise ConnectionError("drop")
+        return  # third attempt succeeds and returns cleanly
+
+    adapter.start = flaky_start
+    # Speed up backoff sleeps.
+    import milyonus.gateway.server as srvmod
+
+    async def fast_sleep(_):
+        return None
+
+    monkeypatch.setattr(srvmod.asyncio, "sleep", fast_sleep)
+    await srv.run()
+    assert calls["n"] == 3  # retried twice, succeeded on the third

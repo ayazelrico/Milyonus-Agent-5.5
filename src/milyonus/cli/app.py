@@ -13,7 +13,6 @@ from rich.console import Console
 
 from milyonus import __version__
 from milyonus.brand import GLYPH, PALETTE, PRODUCT
-from milyonus.version import CODENAME
 
 app = typer.Typer(
     name="milyonus",
@@ -29,8 +28,7 @@ def _version_callback(value: bool) -> None:
     if value:
         console.print(
             f"[bold {PALETTE['cyan_400']}]{GLYPH} {PRODUCT}[/] "
-            f"[{PALETTE['chrome_200']}]v{__version__}[/] "
-            f"[dim](codename {CODENAME})[/]"
+            f"[{PALETTE['chrome_200']}]v{__version__}[/]"
         )
         raise typer.Exit()
 
