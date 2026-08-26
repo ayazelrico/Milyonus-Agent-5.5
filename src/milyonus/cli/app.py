@@ -42,11 +42,11 @@ def _main(
         "-V",
         callback=_version_callback,
         is_eager=True,
-        help="Sürümü göster ve çık.",
+        help="Show the version and exit.",
     ),
 ) -> None:
-    """Milyonus Agent command-line interface. Argümansız çağrılırsa etkileşimli
-    oturum başlatır."""
+    """Milyonus Agent command-line interface. Starts an interactive session
+    when called with no arguments."""
     # No subcommand -> start the interactive session (the default surface).
     if ctx.invoked_subcommand is None:
         from milyonus.cli.tui import run_tui
@@ -56,7 +56,7 @@ def _main(
 
 @app.command()
 def doctor() -> None:
-    """Ortam ve sağlık teşhisi çalıştır."""
+    """Run environment and health diagnostics."""
     from milyonus.cli.doctor import run_doctor
 
     raise typer.Exit(code=run_doctor())
@@ -64,7 +64,7 @@ def doctor() -> None:
 
 @app.command()
 def setup() -> None:
-    """İlk kurulum sihirbazı: sağlayıcı ve anahtar."""
+    """First-run setup wizard: provider and key."""
     from milyonus.cli.setup import run_setup
 
     raise typer.Exit(code=run_setup())
@@ -72,7 +72,7 @@ def setup() -> None:
 
 @app.command()
 def acp() -> None:
-    """ACP sunucusu olarak çalış (editör entegrasyonu, stdio/JSON-RPC)."""
+    """Run as an ACP server (editor integration, stdio/JSON-RPC)."""
     import asyncio
 
     from milyonus.acp.server import run_stdio
@@ -85,7 +85,7 @@ def acp() -> None:
 
 @app.command()
 def chat() -> None:
-    """Etkileşimli terminal oturumu başlat (argümansız `milyonus` ile aynı)."""
+    """Start an interactive terminal session (same as bare `milyonus`)."""
     from milyonus.cli.tui import run_tui
 
     raise typer.Exit(code=run_tui())

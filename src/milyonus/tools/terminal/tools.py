@@ -36,16 +36,16 @@ def make_shell_tool(root: Path) -> Tool:
             out, _ = await asyncio.wait_for(proc.communicate(), timeout=_TIMEOUT)
         except TimeoutError:
             proc.kill()
-            return f"(zaman aşımı: {_TIMEOUT:.0f}s sonra öldürüldü)"
+            return f"(timeout: killed after {_TIMEOUT:.0f}s)"
         text = redact(out.decode("utf-8", "replace")[:_MAX_OUTPUT])
-        return f"[çıkış kodu {proc.returncode}]\n{text}"
+        return f"[exit code {proc.returncode}]\n{text}"
 
     return Tool(
         name="run_shell",
-        description="Çalışma kökünde bir kabuk (shell) komutu çalıştırır.",
+        description="Run a shell command in the working root.",
         parameters={
             "type": "object",
-            "properties": {"command": {"type": "string", "description": "Çalıştırılacak komut"}},
+            "properties": {"command": {"type": "string", "description": "Command to run"}},
             "required": ["command"],
         },
         handler=run_shell,

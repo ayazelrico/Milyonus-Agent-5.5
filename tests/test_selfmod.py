@@ -54,5 +54,5 @@ async def test_apply_change_rolls_back_on_bad_mutation(tmp_path):
 
     kept, msg = await h.apply_change("risky", bad_mutate)
     assert not kept
-    assert "geri alındı" in msg
+    assert "rolled back" in msg
     assert (tmp_path / "file.txt").read_text() == "original\n"

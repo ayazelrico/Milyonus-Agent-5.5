@@ -34,9 +34,9 @@ class ConsolidationReport:
     def summary(self) -> str:
         p = self.processed
         return (
-            f"işlenen: {p.get('active', 0)} aktif / {p.get('rejected', 0)} red / "
-            f"{p.get('pending', 0)} bekleyen · süresi dolan: {self.expired} · "
-            f"yinelenen: {self.deduped} · çelişki: {len(self.contradictions)}"
+            f"processed: {p.get('active', 0)} active / {p.get('rejected', 0)} rejected / "
+            f"{p.get('pending', 0)} pending · expired: {self.expired} · "
+            f"deduped: {self.deduped} · contradictions: {len(self.contradictions)}"
         )
 
 
@@ -62,7 +62,7 @@ async def consolidate(
             continue
         group.sort(key=lambda m: _TIER_RANK.get(m.trust_tier, 9))
         for dup in group[1:]:
-            store.mark_rejected(dup.id, reason="yinelenen bellek birleştirildi")
+            store.mark_rejected(dup.id, reason="duplicate memory merged")
             report.deduped += 1
 
     # 4. Flag likely contradictions (very similar content, opposite polarity is
@@ -73,8 +73,8 @@ async def consolidate(
         for b in remaining[i + 1 :]:
             if a.content == b.content:
                 continue
-            neg_a = " değil" in a.content or " yok" in a.content
-            neg_b = " değil" in b.content or " yok" in b.content
+            neg_a = any(w in a.content.lower() for w in (" değil", " yok", " not ", " no ", "n't"))
+            neg_b = any(w in b.content.lower() for w in (" değil", " yok", " not ", " no ", "n't"))
             if neg_a != neg_b and jaccard(a.content, b.content) >= contradiction_threshold:
                 report.contradictions.append((a.id, b.id))
 

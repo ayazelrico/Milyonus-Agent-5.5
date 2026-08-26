@@ -38,16 +38,16 @@ def make_web_tools() -> list[Tool]:
                         continue
                     body = resp.text[:_MAX_BYTES]
                     return redact(f"[{resp.status_code}] {current}\n{body}")
-                return "çok fazla yönlendirme"
+                return "too many redirects"
         except SSRFBlocked as exc:
-            return f"engellendi (yönlendirme SSRF): {exc}"
+            return f"blocked (redirect SSRF): {exc}"
         except httpx.HTTPError as exc:
-            return f"ağ hatası: {exc}"
+            return f"network error: {exc}"
 
     return [
         Tool(
             name="web_fetch",
-            description="Bir URL'nin içeriğini getirir (SSRF korumalı, salt-okunur).",
+            description="Fetch the contents of a URL (SSRF-guarded, read-only).",
             parameters={
                 "type": "object",
                 "properties": {"url": {"type": "string"}},

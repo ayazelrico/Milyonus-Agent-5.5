@@ -99,7 +99,7 @@ class MemoryPipeline:
         )
         if rephrase:
             self.store.mark_rejected(
-                item_id, reason=f"reddedilmiş fikrin yeniden ifadesi (benzerlik {score:.2f})"
+                item_id, reason=f"rephrase of a rejected idea (similarity {score:.2f})"
             )
             return "rejected"
 
@@ -149,5 +149,5 @@ class MemoryPipeline:
         item = self.store.get(item_id)
         if item is None or item.state != "pending":
             return "missing"
-        self.store.mark_active(item_id, verdict="kullanıcı onayı", confirmations=item.confirmations)
+        self.store.mark_active(item_id, verdict="user approval", confirmations=item.confirmations)
         return "active"

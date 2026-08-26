@@ -68,7 +68,7 @@ class WhatsAppCloudAdapter:
     # --- outbound -------------------------------------------------------
 
     async def send(self, message: OutboundMessage) -> None:
-        text = message.text or "(boş)"
+        text = message.text or "(empty)"
         for i in range(0, len(text), 4000):
             await self._client.post(
                 f"{_GRAPH}/{self._phone_id}/messages",
@@ -82,7 +82,7 @@ class WhatsAppCloudAdapter:
             )
 
     async def ask_approval(self, user_id: str, prompt: str) -> bool:
-        await self.send(OutboundMessage(user_id, f"{prompt}\nCevap: evet / hayır"))
+        await self.send(OutboundMessage(user_id, f"{prompt}\nReply: yes / no"))
         loop = asyncio.get_event_loop()
         fut: asyncio.Future[str] = loop.create_future()
         self._approval_waiters[user_id] = fut
@@ -212,7 +212,7 @@ class WhatsAppCloudAdapter:
 
     async def start(self, handler: MessageHandler) -> None:
         if not self._token or not self._phone_id:
-            raise RuntimeError("WHATSAPP_TOKEN ve WHATSAPP_PHONE_NUMBER_ID ayarlı olmalı.")
+            raise RuntimeError("WHATSAPP_TOKEN and WHATSAPP_PHONE_NUMBER_ID must be set.")
         asyncio.create_task(self._dispatch_inbound(handler))
         server = await asyncio.start_server(self._handle_conn, self.host, self.port)
         async with server:

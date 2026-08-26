@@ -62,7 +62,7 @@ class MCPClient:
             while True:
                 line = await self._proc.stdout.readline()
                 if not line:
-                    raise RuntimeError("MCP sunucusu beklenmedik şekilde kapandı")
+                    raise RuntimeError("MCP server closed unexpectedly")
                 msg = json.loads(line.decode("utf-8"))
                 if msg.get("id") == rid:
                     if "error" in msg:

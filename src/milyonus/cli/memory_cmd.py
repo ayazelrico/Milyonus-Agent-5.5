@@ -16,8 +16,8 @@ from rich.table import Table
 from milyonus.brand import GLYPH, PALETTE
 from milyonus.memory.store import MemoryStore
 
-memory_app = typer.Typer(help="Doğrulanmış belleği görüntüle ve yönet.")
-audit_app = typer.Typer(help="Denetim günlüğünü doğrula.")
+memory_app = typer.Typer(help="Inspect and manage verified memory.")
+audit_app = typer.Typer(help="Verify the audit ledger.")
 console = Console()
 
 _TIER_COLOR = {
@@ -40,17 +40,17 @@ def _age(ts: float) -> str:
 
 @memory_app.command("list")
 def memory_list() -> None:
-    """Doğrulanmış (aktif) kalıcı belleği listele."""
+    """List verified (active) durable memory."""
     store = MemoryStore()
     items = store.active()
     if not items:
-        console.print(f"[dim]{GLYPH} kalıcı bellek boş.[/]")
+        console.print(f"[dim]{GLYPH} durable memory is empty.[/]")
         raise typer.Exit()
-    table = Table(title=f"{GLYPH} Kalıcı Bellek")
-    table.add_column("Katman")
-    table.add_column("İçerik", overflow="fold")
-    table.add_column("Kaynak")
-    table.add_column("Yaş")
+    table = Table(title=f"{GLYPH} Durable Memory")
+    table.add_column("Tier")
+    table.add_column("Content", overflow="fold")
+    table.add_column("Source")
+    table.add_column("Age")
     table.add_column("id", style="dim")
     for m in items:
         color = _TIER_COLOR.get(m.trust_tier, "white")
@@ -66,17 +66,17 @@ def memory_list() -> None:
 
 @memory_app.command("pending")
 def memory_pending() -> None:
-    """Karantinada bekleyen adayları göster."""
+    """Show candidates pending in quarantine."""
     store = MemoryStore()
     items = store.by_state("pending")
     if not items:
-        console.print(f"[dim]{GLYPH} karantina boş.[/]")
+        console.print(f"[dim]{GLYPH} quarantine is empty.[/]")
         raise typer.Exit()
-    table = Table(title=f"{GLYPH} Karantina (bekleyen)")
-    table.add_column("Katman")
-    table.add_column("İçerik", overflow="fold")
-    table.add_column("Kaynak")
-    table.add_column("Teyit")
+    table = Table(title=f"{GLYPH} Quarantine (pending)")
+    table.add_column("Tier")
+    table.add_column("Content", overflow="fold")
+    table.add_column("Source")
+    table.add_column("Confirms")
     table.add_column("id", style="dim")
     for m in items:
         table.add_row(
@@ -91,46 +91,46 @@ def memory_pending() -> None:
 
 @memory_app.command("why")
 def memory_why(item_id: str) -> None:
-    """Bir belleğin tam kaynak zincirini (provenance) göster."""
+    """Show a memory's full provenance chain."""
     store = MemoryStore()
     m = store.get(item_id)
     if m is None:
-        console.print(f"[{PALETTE['risk']}]Bulunamadı: {item_id}[/]")
+        console.print(f"[{PALETTE['risk']}]Not found: {item_id}[/]")
         raise typer.Exit(code=1)
     console.print(f"[bold]{GLYPH} {m.id}[/]  [dim]{m.state}[/]")
-    console.print(f"  içerik   : {m.content}")
-    console.print(f"  katman   : {m.trust_tier}")
-    console.print(f"  kaynak   : {m.provenance.source_kind} {m.provenance.source_uri or ''}")
-    console.print(f"  oturum   : {m.provenance.session_id} / tur {m.provenance.turn_id}")
-    console.print(f"  aktör    : {m.provenance.actor or '-'}")
-    console.print(f"  kanıt#   : {m.evidence_hash}")
-    console.print(f"  verdikt  : {m.verdict or '-'}")
-    console.print(f"  teyit    : {m.confirmations}")
+    console.print(f"  content  : {m.content}")
+    console.print(f"  tier     : {m.trust_tier}")
+    console.print(f"  source   : {m.provenance.source_kind} {m.provenance.source_uri or ''}")
+    console.print(f"  session  : {m.provenance.session_id} / turn {m.provenance.turn_id}")
+    console.print(f"  actor    : {m.provenance.actor or '-'}")
+    console.print(f"  evidence#: {m.evidence_hash}")
+    console.print(f"  verdict  : {m.verdict or '-'}")
+    console.print(f"  confirms : {m.confirmations}")
 
 
 @memory_app.command("diff")
-def memory_diff(since: str = typer.Option("7d", help="örn. 24h, 7d")) -> None:
-    """Belirtilen süre içinde ne öğrenildi/değişti."""
+def memory_diff(since: str = typer.Option("7d", help="e.g. 24h, 7d")) -> None:
+    """What was learned/changed within the given window."""
     store = MemoryStore()
     unit = since[-1]
     value = int(since[:-1])
     seconds = value * {"h": 3600, "d": 86400}.get(unit, 86400)
     cutoff = time.time() - seconds
     recent = [m for m in store.active() if m.created_at >= cutoff]
-    console.print(f"[bold]{GLYPH} Son {since} içinde {len(recent)} yeni bellek[/]")
+    console.print(f"[bold]{GLYPH} {len(recent)} new memories in the last {since}[/]")
     for m in recent:
         console.print(f"  [{m.trust_tier}] {m.content}  [dim]{m.id}[/]")
 
 
 @memory_app.command("revoke")
 def memory_revoke(
-    source: str = typer.Option(..., "--source", help="İptal edilecek kaynak URI"),
+    source: str = typer.Option(..., "--source", help="Source URI to revoke"),
 ) -> None:
-    """Bir kaynaktan türeyen tüm bellekleri (kaskad) iptal et."""
+    """Revoke all memory derived from a source (cascade)."""
     store = MemoryStore()
     revoked = store.revoke_by_source(source)
     console.print(
-        f"[{PALETTE['quarantine']}]{GLYPH} {len(revoked)} bellek iptal edildi[/] (kaynak: {source})"
+        f"[{PALETTE['quarantine']}]{GLYPH} revoked {len(revoked)} memories[/] (source: {source})"
     )
     for rid in revoked:
         console.print(f"  - {rid}")
@@ -138,12 +138,12 @@ def memory_revoke(
 
 @memory_app.command("search")
 def memory_search(query: str) -> None:
-    """Aktif bellekte içerik ara."""
+    """Search content in active memory."""
     store = MemoryStore()
     q = query.casefold()
     hits = [m for m in store.active() if q in m.content.casefold()]
     if not hits:
-        console.print("[dim]eşleşme yok[/]")
+        console.print("[dim]no matches[/]")
         raise typer.Exit()
     for m in hits:
         console.print(f"[{m.trust_tier}] {m.content}  [dim]{m.id}[/]")
@@ -151,24 +151,24 @@ def memory_search(query: str) -> None:
 
 @audit_app.command("verify")
 def audit_verify() -> None:
-    """Bellek denetim günlüğünün hash zincirini doğrula."""
+    """Verify the memory audit ledger's hash chain."""
     store = MemoryStore()
     ok = store.verify_ledger()
     if ok:
-        console.print(f"[{PALETTE['ok']}]{GLYPH} denetim günlüğü bütünlüğü sağlam.[/]")
+        console.print(f"[{PALETTE['ok']}]{GLYPH} audit ledger integrity intact.[/]")
     else:
-        console.print(f"[{PALETTE['risk']}]{GLYPH} UYARI: denetim günlüğü kurcalanmış![/]")
+        console.print(f"[{PALETTE['risk']}]{GLYPH} WARNING: audit ledger tampered![/]")
         raise typer.Exit(code=1)
 
 
 @audit_app.command("log")
 def audit_log(limit: int = 30) -> None:
-    """Son denetim günlüğü girdilerini göster."""
+    """Show recent audit ledger entries."""
     store = MemoryStore()
     entries = store.ledger_entries(limit=limit)
-    table = Table(title=f"{GLYPH} Denetim Günlüğü")
+    table = Table(title=f"{GLYPH} Audit Ledger")
     table.add_column("seq")
-    table.add_column("eylem")
+    table.add_column("action")
     table.add_column("item", style="dim")
     table.add_column("hash", style="dim")
     for e in reversed(entries):
@@ -178,8 +178,8 @@ def audit_log(limit: int = 30) -> None:
 
 @memory_app.command("consolidate")
 def memory_consolidate() -> None:
-    """Gece konsolidasyonu: bekleyenleri işle, süresi dolanları düşür,
-    yinelenenleri birleştir, çelişkileri işaretle."""
+    """Sleep-time consolidation: process pending, expire due, merge
+    duplicates, flag contradictions."""
     import asyncio
 
     from milyonus.config.env import load_env
@@ -192,7 +192,7 @@ def memory_consolidate() -> None:
     store = MemoryStore()
     pipeline = MemoryPipeline(store, config=cfg.memory)
     report = asyncio.run(consolidate(pipeline))
-    console.print(f"[bold {PALETTE['cyan_400']}]{GLYPH} Konsolidasyon[/]")
+    console.print(f"[bold {PALETTE['cyan_400']}]{GLYPH} Consolidation[/]")
     console.print(f"  {report.summary()}")
     for a, b in report.contradictions:
-        console.print(f"  [{PALETTE['warn']}]çelişki:[/] {a} <-> {b}")
+        console.print(f"  [{PALETTE['warn']}]contradiction:[/] {a} <-> {b}")

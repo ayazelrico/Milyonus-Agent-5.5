@@ -76,9 +76,7 @@ class OpenAICompatProvider:
 
     def _headers(self) -> dict[str, str]:
         if not self._api_key:
-            raise ProviderError(
-                f"{self._api_key_env} ayarlı değil. `~/.milyonus/.env` içine ekleyin."
-            )
+            raise ProviderError(f"{self._api_key_env} is not set. Add it to `~/.milyonus/.env`.")
         headers = {
             "Authorization": f"Bearer {self._api_key}",
             "content-type": "application/json",

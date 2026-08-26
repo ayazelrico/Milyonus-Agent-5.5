@@ -71,23 +71,27 @@ class RiskEngine:
             findings = scan_command(command)
             if any(f.severity == "block" for f in findings):
                 sigs = ", ".join(f.signal for f in findings)
-                return ("block", f"yürütme öncesi tarama engelledi: {sigs}", findings)
+                return ("block", f"pre-execution scan blocked: {sigs}", findings)
 
         # Safe tools with no irreversible hint run automatically.
         if base_risk == "safe" and not self._is_irreversible(call):
-            return ("auto", "geri alınabilir, düşük etki", findings)
+            return ("auto", "reversible, low impact", findings)
 
         # Irreversible/outward always confirms and can never be pre-granted.
         if self._is_irreversible(call):
-            return ("confirm", "geri alınamaz veya dışa dönük eylem — onay şart", findings)
+            return (
+                "confirm",
+                "irreversible or outward-reaching action — approval required",
+                findings,
+            )
 
         # danger-class or caution tools: confirm unless a session grant exists.
         if self._signature(call) in self.session_grants:
-            return ("auto", "oturum izni verilmiş", findings)
+            return ("auto", "session grant present", findings)
         if base_risk in ("caution", "danger") or call.name in _ALWAYS_CONFIRM_TOOLS:
-            return ("confirm", f"{base_risk} sınıfı araç", findings)
+            return ("confirm", f"{base_risk}-class tool", findings)
 
-        return ("auto", "varsayılan güvenli", findings)
+        return ("auto", "default safe", findings)
 
     def grant_session(self, call: ToolCall, *, irreversible: bool) -> bool:
         """Record an 'always allow for session'. Refuses for the irreversible

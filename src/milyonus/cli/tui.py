@@ -60,7 +60,7 @@ async def _run_session(root: Path) -> int:
     try:
         cfg = load_config()
     except Exception as exc:
-        console.print(f"[{PALETTE['risk']}]Yapılandırma hatası:[/] {exc}")
+        console.print(f"[{PALETTE['risk']}]Config error:[/] {exc}")
         return 1
 
     provider = build_provider(cfg.provider)
@@ -97,7 +97,7 @@ async def _run_session(root: Path) -> int:
     for r in ctx_results:
         if not r.included:
             console.print(
-                f"[{PALETTE['risk']}]⚠ bağlam dosyası atlandı (injection):[/] {r.path.name}"
+                f"[{PALETTE['risk']}]⚠ context file skipped (injection):[/] {r.path.name}"
             )
 
     extra = [s for s in ([skills_section] + ctx_sections) if s]
@@ -116,7 +116,7 @@ async def _run_session(root: Path) -> int:
 
     async def on_tool(call: ToolCall) -> None:
         console.print(
-            f"\n[{PALETTE['blue_500']}]→ araç[/] [bold]{call.name}[/] [dim]{call.arguments}[/]"
+            f"\n[{PALETTE['blue_500']}]→ tool[/] [bold]{call.name}[/] [dim]{call.arguments}[/]"
         )
 
     async def approve(call: ToolCall, risk: str) -> bool:
@@ -129,21 +129,21 @@ async def _run_session(root: Path) -> int:
         if decision == "auto":
             return True
         if decision == "block":
-            console.print(f"\n[{PALETTE['risk']}]✗ engellendi[/] {reason}")
+            console.print(f"\n[{PALETTE['risk']}]✗ blocked[/] {reason}")
             return False
         irreversible = risk_engine._is_irreversible(call)
         color = PALETTE["risk"] if irreversible else PALETTE["warn"]
         console.print(
-            f"\n[{color}]⚠ onay gerekli[/] [bold]{call.name}[/] "
+            f"\n[{color}]⚠ approval required[/] [bold]{call.name}[/] "
             f"[dim]{call.arguments}[/]  ({reason})"
         )
         # Irreversible actions cannot be granted 'always'; only y/N.
-        prompt = "  izin ver? [e/H] " if irreversible else "  izin ver? [e/H/oturum] "
+        prompt = "  allow? [y/N] " if irreversible else "  allow? [y/N/session] "
         ans = (await asyncio.to_thread(input, prompt)).strip().lower()
-        if ans in ("oturum", "o", "session", "s") and not irreversible:
+        if ans in ("session", "s") and not irreversible:
             risk_engine.grant_session(call, irreversible=False)
             return True
-        return ans in ("e", "evet", "y", "yes")
+        return ans in ("y", "yes")
 
     loop = AgentLoop(
         provider=provider,
@@ -164,7 +164,7 @@ async def _run_session(root: Path) -> int:
             with patch_stdout():
                 user_input = await ptk.prompt_async(f"\n{PROMPT} ")
         except (EOFError, KeyboardInterrupt):
-            console.print(f"\n[{PALETTE['chrome_500']}]Görüşürüz {GLYPH}[/]")
+            console.print(f"\n[{PALETTE['chrome_500']}]See you {GLYPH}[/]")
             break
 
         user_input = user_input.strip()
@@ -179,10 +179,10 @@ async def _run_session(root: Path) -> int:
         try:
             answer = await loop.run_turn(history)
         except ProviderError as exc:
-            console.print(f"\n[{PALETTE['risk']}]Sağlayıcı hatası:[/] {exc}")
+            console.print(f"\n[{PALETTE['risk']}]Provider error:[/] {exc}")
             continue
         except KeyboardInterrupt:
-            console.print(f"\n[{PALETTE['warn']}](tur kesildi)[/]")
+            console.print(f"\n[{PALETTE['warn']}](turn interrupted)[/]")
             continue
         store.append_message(sid, turn=turn, role="assistant", content=answer)
         turn += 1

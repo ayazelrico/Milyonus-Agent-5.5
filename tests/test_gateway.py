@@ -62,7 +62,7 @@ async def test_unpaired_user_denied(tmp_path):
     adapter = FakeAdapter()
     srv = _server(tmp_path, adapter)
     await srv.handle(adapter, InboundMessage("telegram", "u1", "selam"))
-    assert any("eşleştirme" in m.text.lower() for m in adapter.sent)
+    assert any("pairing" in m.text.lower() for m in adapter.sent)
 
 
 async def test_pairing_flow(tmp_path):
@@ -71,7 +71,7 @@ async def test_pairing_flow(tmp_path):
     code = srv.pairing.new_code("telegram")
     await srv.handle(adapter, InboundMessage("telegram", "u1", f"/pair {code}"))
     assert srv.pairing.is_paired("telegram", "u1")
-    assert any("başarılı" in m.text for m in adapter.sent)
+    assert any("successful" in m.text for m in adapter.sent)
 
 
 async def test_authorized_turn(tmp_path):

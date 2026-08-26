@@ -39,19 +39,21 @@ class DelegationContract:
 
     def validate(self) -> None:
         if not self.goal.strip():
-            raise ContractError("goal boş olamaz")
+            raise ContractError("goal cannot be empty")
         if not self.context.strip():
-            raise ContractError("context boş olamaz — çocuk ajan ebeveyni bilmez")
+            raise ContractError(
+                "context cannot be empty — the child agent does not know the parent"
+            )
         if not self.success_criteria:
-            raise ContractError("success_criteria boş olamaz")
+            raise ContractError("success_criteria cannot be empty")
 
     def briefing(self) -> str:
-        parts = [f"# Görev\n{self.goal}", f"# Bağlam\n{self.context}"]
+        parts = [f"# Task\n{self.goal}", f"# Context\n{self.context}"]
         if self.inherited_facts:
             facts = "\n".join(f"- {f}" for f in self.inherited_facts)
-            parts.append(f"# Devralınan bilgiler\n{facts}")
+            parts.append(f"# Inherited facts\n{facts}")
         crit = "\n".join(f"- {c}" for c in self.success_criteria)
-        parts.append(f"# Başarı ölçütleri\n{crit}")
+        parts.append(f"# Success criteria\n{crit}")
         if self.forbidden:
             forb = "\n".join(f"- {f}" for f in self.forbidden)
             parts.append(f"# Yapma\n{forb}")
@@ -81,8 +83,8 @@ async def run_subagent(
     contract.validate()
     child_tools = _restricted_registry(parent_tools)
     system = (
-        "Sen bir alt görev ajanısın (subagent). Sana verilen brifing dışında "
-        "hiçbir geçmişi bilmezsin. Sadece görevi tamamla ve sonucu döndür."
+        "You are a subagent. You know no history beyond the briefing you were "
+        "given. Complete the task and return the result."
     )
     loop = AgentLoop(
         provider=provider,

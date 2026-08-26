@@ -77,15 +77,15 @@ class SkillEngine:
     def view(self, name: str, ref: str | None = None) -> str:
         skill = self.get(name)
         if skill is None:
-            return f"skill bulunamadı: {name}"
+            return f"skill not found: {name}"
         if ref is None:
             refs = skill.reference_files()
-            ref_note = f"\n\nReferans dosyaları: {', '.join(refs)}" if refs else ""
+            ref_note = f"\n\nReference files: {', '.join(refs)}" if refs else ""
             return f"# {skill.meta.name} (v{skill.meta.version})\n\n{skill.body}{ref_note}"
         # Level 2: a specific reference file, path-confined to the skill dir.
         target = (skill.path / ref).resolve()
         if skill.path.resolve() not in target.parents:
-            return f"geçersiz referans yolu: {ref}"
+            return f"invalid reference path: {ref}"
         if not target.exists():
-            return f"referans dosyası yok: {ref}"
+            return f"reference file not found: {ref}"
         return target.read_text("utf-8")

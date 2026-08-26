@@ -55,7 +55,7 @@ class SkillManager:
         if not may_install(findings, force=force):
             v = worst_verdict(findings)
             sigs = ", ".join(f.signal for f in findings)
-            return ManageResult(False, f"güvenlik taraması engelledi ({v}): {sigs}", meta.name)
+            return ManageResult(False, f"security scan blocked ({v}): {sigs}", meta.name)
 
         # 2. Reproducibility gate — the skill must be validated before promotion.
         staged = self.staging_dir / meta.name
@@ -66,7 +66,7 @@ class SkillManager:
             shutil.rmtree(staged, ignore_errors=True)
             return ManageResult(
                 False,
-                "tekrarlanabilirlik kapısı geçilemedi — skill terfi etmedi",
+                "reproducibility gate failed — skill not promoted",
                 meta.name,
             )
 
@@ -75,18 +75,18 @@ class SkillManager:
         if target.exists():
             shutil.rmtree(target)
         shutil.move(str(staged), str(target))
-        return ManageResult(True, f"skill oluşturuldu: {meta.name}", meta.name)
+        return ManageResult(True, f"skill created: {meta.name}", meta.name)
 
     def delete(self, name: str) -> ManageResult:
         target = self.live_dir / name
         if not target.exists():
-            return ManageResult(False, f"skill yok: {name}", name)
+            return ManageResult(False, f"no such skill: {name}", name)
         shutil.rmtree(target)
-        return ManageResult(True, f"skill silindi: {name}", name)
+        return ManageResult(True, f"skill deleted: {name}", name)
 
     async def patch(self, name: str, new_body: str, *, force: bool = False) -> ManageResult:
         target = self.live_dir / name / "SKILL.md"
         if not target.exists():
-            return ManageResult(False, f"skill yok: {name}", name)
+            return ManageResult(False, f"no such skill: {name}", name)
         skill = parse_skill_md(target.read_text("utf-8"), target.parent)
         return await self.create(skill.meta, new_body, force=force)

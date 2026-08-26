@@ -20,7 +20,7 @@ def make_skill_tools(engine: SkillEngine, manager: SkillManager) -> list[Tool]:
     async def skills_list(_args: dict[str, Any]) -> str:
         items = engine.list_level0()
         if not items:
-            return "kayıtlı skill yok"
+            return "no registered skills"
         return json.dumps(items, ensure_ascii=False)
 
     async def skill_view(args: dict[str, Any]) -> str:
@@ -45,24 +45,24 @@ def make_skill_tools(engine: SkillEngine, manager: SkillManager) -> list[Tool]:
         if action == "patch":
             result = await manager.patch(name, body, force=args.get("force", False))
             return result.message
-        return f"bilinmeyen eylem: {action}"
+        return f"unknown action: {action}"
 
     return [
         Tool(
             name="skills_list",
-            description="Mevcut skill'leri (ad, açıklama, kategori) listeler.",
+            description="List available skills (name, description, category).",
             parameters={"type": "object", "properties": {}},
             handler=skills_list,
             risk="safe",
         ),
         Tool(
             name="skill_view",
-            description="Bir skill'in tam içeriğini veya bir referans dosyasını gösterir.",
+            description="Show a skill's full content or a reference file.",
             parameters={
                 "type": "object",
                 "properties": {
                     "name": {"type": "string"},
-                    "ref": {"type": "string", "description": "İsteğe bağlı referans dosyası"},
+                    "ref": {"type": "string", "description": "Optional reference file"},
                 },
                 "required": ["name"],
             },
@@ -72,8 +72,8 @@ def make_skill_tools(engine: SkillEngine, manager: SkillManager) -> list[Tool]:
         Tool(
             name="skill_manage",
             description=(
-                "Kendi skill'ini oluştur/güncelle/sil. Oluşturma güvenlik "
-                "taramasından ve tekrarlanabilirlik kapısından geçer."
+                "Create/update/delete your own skill. Creation passes a security "
+                "scan and a reproducibility gate."
             ),
             parameters={
                 "type": "object",
@@ -82,7 +82,7 @@ def make_skill_tools(engine: SkillEngine, manager: SkillManager) -> list[Tool]:
                     "name": {"type": "string"},
                     "description": {"type": "string"},
                     "category": {"type": "string"},
-                    "body": {"type": "string", "description": "SKILL.md gövdesi"},
+                    "body": {"type": "string", "description": "SKILL.md body"},
                 },
                 "required": ["action", "name"],
             },

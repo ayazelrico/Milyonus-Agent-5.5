@@ -101,16 +101,20 @@ def scan(text: str) -> list[Finding]:
     """Return all findings for a piece of untrusted text (empty == clean)."""
     findings: list[Finding] = []
     if _OVERRIDE.search(text):
-        findings.append(Finding("instruction_override", "high", "talimat geçersiz kılma kalıbı"))
+        findings.append(Finding("instruction_override", "high", "instruction-override pattern"))
     if _IMPERATIVE.search(text):
-        findings.append(Finding("imperative", "medium", "gözlem için uygunsuz emir kipi/eylem"))
+        findings.append(
+            Finding("imperative", "medium", "imperative/action inappropriate for an observation")
+        )
     if _CREDENTIAL.search(text):
-        findings.append(Finding("credential", "high", "kimlik bilgisi/secret kalıbı"))
+        findings.append(Finding("credential", "high", "credential/secret pattern"))
     if _AUTHORITY.search(text):
-        findings.append(Finding("authority_grant", "high", "yetki verme / koruma atlama kalıbı"))
+        findings.append(
+            Finding("authority_grant", "high", "authority-grant / safeguard-bypass pattern")
+        )
     inv = _has_invisible(text)
     if inv is not None:
-        findings.append(Finding("invisible_unicode", "high", f"görünmez karakter: {inv}"))
+        findings.append(Finding("invisible_unicode", "high", f"invisible character: {inv}"))
     return findings
 
 

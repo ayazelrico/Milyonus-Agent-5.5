@@ -46,7 +46,7 @@ def build_provider(cfg: ProviderConfig, *, model: str | None = None) -> Provider
             resolved_model, base_url=base, api_key="not-needed", api_key_env="_UNUSED"
         )
 
-    raise ProviderError(f"Bilinmeyen sağlayıcı: {name}")
+    raise ProviderError(f"Unknown provider: {name}")
 
 
 def openrouter_config(model: str) -> ProviderConfig:

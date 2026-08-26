@@ -36,7 +36,7 @@ def parse_interval(spec: str) -> int:
     """Parse "30m"/"2h"/"1d" into seconds."""
     spec = spec.strip().lower()
     if not spec or spec[-1] not in _UNITS:
-        raise ValueError(f"geçersiz aralık: {spec} (örn. 30m, 2h, 1d)")
+        raise ValueError(f"invalid interval: {spec} (e.g. 30m, 2h, 1d)")
     return int(spec[:-1]) * _UNITS[spec[-1]]
 
 

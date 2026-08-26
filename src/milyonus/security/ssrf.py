@@ -46,26 +46,26 @@ def check_url(url: str) -> str:
     parsed = urlparse(url)
     scheme = (parsed.scheme or "").lower()
     if scheme in _BLOCKED_SCHEMES:
-        raise SSRFBlocked(f"izin verilmeyen şema: {scheme}")
+        raise SSRFBlocked(f"disallowed scheme: {scheme}")
     if scheme not in ("http", "https"):
-        raise SSRFBlocked(f"sadece http/https: {scheme or '(yok)'}")
+        raise SSRFBlocked(f"only http/https: {scheme or '(none)'}")
     host = parsed.hostname
     if not host:
-        raise SSRFBlocked("host yok")
+        raise SSRFBlocked("no host")
     if host.lower() in _METADATA_HOSTS:
-        raise SSRFBlocked(f"bulut metadata host'u engellendi: {host}")
+        raise SSRFBlocked(f"cloud metadata host blocked: {host}")
 
     # Resolve and check every returned address. DNS failure => blocked.
     try:
         infos = socket.getaddrinfo(host, parsed.port or (443 if scheme == "https" else 80))
     except socket.gaierror as exc:
-        raise SSRFBlocked(f"DNS çözülemedi (fail-closed): {host}") from exc
+        raise SSRFBlocked(f"DNS resolution failed (fail-closed): {host}") from exc
     for info in infos:
         addr = str(info[4][0])
         try:
             ip = ipaddress.ip_address(addr.split("%")[0])
         except ValueError:
-            raise SSRFBlocked(f"IP ayrıştırılamadı: {addr}") from None
+            raise SSRFBlocked(f"could not parse IP: {addr}") from None
         if _ip_is_blocked(ip):
-            raise SSRFBlocked(f"özel/dahili adres engellendi: {ip}")
+            raise SSRFBlocked(f"private/internal address blocked: {ip}")
     return url

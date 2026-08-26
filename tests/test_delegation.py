@@ -57,7 +57,7 @@ class ScriptedProvider:
 
     async def stream(self, request: CompletionRequest) -> AsyncIterator[StreamEvent]:
         # Confirm the briefing reached the child.
-        assert "Başarı ölçütleri" in request.messages[0].content
+        assert "Success criteria" in request.messages[0].content
         yield StreamEvent(kind="text", delta="alt görev tamam")
         yield StreamEvent(kind="usage", usage=Usage(input_tokens=1, output_tokens=1))
         yield StreamEvent(kind="done", stop_reason="end_turn")

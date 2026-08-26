@@ -40,7 +40,7 @@ class ToolRegistry:
 
     def register(self, tool: Tool) -> None:
         if tool.name in self._tools:
-            raise ValueError(f"Araç zaten kayıtlı: {tool.name}")
+            raise ValueError(f"Tool already registered: {tool.name}")
         self._tools[tool.name] = tool
 
     def get(self, name: str) -> Tool | None:
@@ -56,7 +56,7 @@ class ToolRegistry:
         """Execute a tool. Returns (content, is_error)."""
         tool = self._tools.get(name)
         if tool is None:
-            return (f"Bilinmeyen araç: {name}", True)
+            return (f"Unknown tool: {name}", True)
         try:
             return (await tool.handler(args), False)
         except Exception as exc:  # tools surface errors as tool results, not crashes

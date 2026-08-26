@@ -108,7 +108,7 @@ class ACPServer:
             else:
                 if mid is None:
                     return None  # unknown notification: ignore
-                return _error(mid, -32601, f"bilinmeyen method: {method}")
+                return _error(mid, -32601, f"unknown method: {method}")
         except Exception as exc:  # noqa: BLE001 - surface as JSON-RPC error
             if mid is None:
                 return None
@@ -192,7 +192,7 @@ class ACPServer:
         sid = params.get("sessionId", "")
         session = self._sessions.get(sid)
         if session is None:
-            raise ValueError(f"bilinmeyen oturum: {sid}")
+            raise ValueError(f"unknown session: {sid}")
         text = _extract_text(params.get("prompt", []))
         session.history.append(Message(role="user", content=text))
         try:
@@ -206,7 +206,7 @@ class ACPServer:
                     "sessionId": sid,
                     "update": {
                         "sessionUpdate": "agent_message_chunk",
-                        "content": {"type": "text", "text": f"Sağlayıcı hatası: {exc}"},
+                        "content": {"type": "text", "text": f"Provider error: {exc}"},
                     },
                 },
             )

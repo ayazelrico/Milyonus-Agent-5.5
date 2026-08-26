@@ -109,7 +109,7 @@ class PairingManager:
         u = self._user(channel, uid)
         if u.locked_until > now:
             mins = int((u.locked_until - now) // 60) + 1
-            return (False, f"çok fazla hatalı deneme — {mins} dk kilitli")
+            return (False, f"too many failed attempts — locked for {mins} min")
 
         entry = self._state.pending.get(code.strip().upper())
         valid = (
@@ -124,7 +124,7 @@ class PairingManager:
                 u.failures = 0
             self._store_user(channel, uid, u)
             self._save()
-            return (False, "geçersiz veya süresi dolmuş kod")
+            return (False, "invalid or expired code")
 
         # Success: pair and consume the code.
         self._state.paired.setdefault(channel, [])
@@ -133,7 +133,7 @@ class PairingManager:
         del self._state.pending[code.strip().upper()]
         self._store_user(channel, uid, UserState())  # reset failures
         self._save()
-        return (True, "eşleştirme başarılı")
+        return (True, "pairing successful")
 
     def can_request(self, channel: str, uid: str) -> bool:
         """Rate-limit: at most one request per interval."""

@@ -24,7 +24,7 @@ def _resolve(root: Path, rel: str) -> Path:
     p = (root / rel).resolve()
     root_r = root.resolve()
     if p != root_r and root_r not in p.parents:
-        raise PathEscape(f"Yol çalışma kökünün dışında: {rel}")
+        raise PathEscape(f"Path outside the working root: {rel}")
     return p
 
 
@@ -45,22 +45,22 @@ def make_fs_tools(root: Path) -> list[Tool]:
         p.parent.mkdir(parents=True, exist_ok=True)
         content = args["content"]
         p.write_text(content, encoding="utf-8")
-        return f"Yazıldı: {args['path']} ({len(content)} karakter)"
+        return f"Wrote: {args['path']} ({len(content)} chars)"
 
     async def list_dir(args: dict[str, Any]) -> str:
         p = _resolve(root, args.get("path", "."))
         if not p.is_dir():
-            return f"Dizin değil: {args.get('path', '.')}"
+            return f"Not a directory: {args.get('path', '.')}"
         entries = sorted(f"{'d' if e.is_dir() else 'f'} {e.name}" for e in p.iterdir())
-        return "\n".join(entries) if entries else "(boş)"
+        return "\n".join(entries) if entries else "(empty)"
 
     return [
         Tool(
             name="read_file",
-            description="Çalışma kökü içindeki bir dosyanın içeriğini okur.",
+            description="Read the contents of a file within the working root.",
             parameters={
                 "type": "object",
-                "properties": {"path": {"type": "string", "description": "Göreli yol"}},
+                "properties": {"path": {"type": "string", "description": "Relative path"}},
                 "required": ["path"],
             },
             handler=read_file,
@@ -68,7 +68,7 @@ def make_fs_tools(root: Path) -> list[Tool]:
         ),
         Tool(
             name="write_file",
-            description="Bir dosyaya içerik yazar (varsa üzerine yazar).",
+            description="Write content to a file (overwrites if it exists).",
             parameters={
                 "type": "object",
                 "properties": {
@@ -82,10 +82,10 @@ def make_fs_tools(root: Path) -> list[Tool]:
         ),
         Tool(
             name="list_dir",
-            description="Bir dizinin içeriğini listeler.",
+            description="List the contents of a directory.",
             parameters={
                 "type": "object",
-                "properties": {"path": {"type": "string", "description": "Göreli yol"}},
+                "properties": {"path": {"type": "string", "description": "Relative path"}},
             },
             handler=list_dir,
             risk="safe",

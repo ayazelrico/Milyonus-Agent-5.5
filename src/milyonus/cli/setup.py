@@ -25,10 +25,10 @@ _PROVIDER_KEY = {
 
 def run_setup() -> int:
     ensure_layout()
-    console.print(f"[bold {PALETTE['cyan_400']}]{GLYPH} Milyonus kurulum[/]\n")
+    console.print(f"[bold {PALETTE['cyan_400']}]{GLYPH} Milyonus setup[/]\n")
 
     provider = Prompt.ask(
-        "Sağlayıcı",
+        "Provider",
         choices=["anthropic", "openai", "openrouter", "local"],
         default="anthropic",
     )
@@ -41,20 +41,20 @@ def run_setup() -> int:
             'api_key_env = "OPENROUTER_API_KEY"\n'
         )
     elif provider == "local":
-        model = Prompt.ask("Yerel model adı", default="llama3")
+        model = Prompt.ask("Local model name", default="llama3")
         body = f'[provider]\nname = "local"\nmodel = "{model}"\n'
     else:
         body = f'[provider]\nname = "{provider}"\n'
 
     path = config_file()
     path.write_text(body, encoding="utf-8")
-    console.print(f"[{PALETTE['ok']}]yazıldı:[/] {path}")
+    console.print(f"[{PALETTE['ok']}]wrote:[/] {path}")
 
     key = _PROVIDER_KEY[provider]
     if key:
         console.print(
-            f"\n[bold]Sıradaki adım[/] — anahtarını ekle (değeri kimse görmez):\n"
+            f"\n[bold]Next step[/] — add your key (nobody sees the value):\n"
             f"  [dim]echo '{key}=...' >> {env_file()} && chmod 600 {env_file()}[/]"
         )
-    console.print("\nSonra: [bold]milyonus doctor[/] ile doğrula, [bold]milyonus[/] ile başla.")
+    console.print("\nThen: verify with [bold]milyonus doctor[/], start with [bold]milyonus[/].")
     return 0

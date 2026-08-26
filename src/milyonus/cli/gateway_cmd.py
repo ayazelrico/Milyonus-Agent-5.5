@@ -12,19 +12,19 @@ from milyonus.config.env import load_env
 from milyonus.config.loader import load_config
 from milyonus.gateway.pairing import PairingManager
 
-gateway_app = typer.Typer(help="Mesajlaşma gateway'ini yönet.")
+gateway_app = typer.Typer(help="Manage the messaging gateway.")
 console = Console()
 
 
 @gateway_app.command("start")
 def gateway_start(
     channel: str = typer.Option(
-        "telegram", help="Başlatılacak kanal: telegram|whatsapp|slack|discord"
+        "telegram", help="Channel to start: telegram|whatsapp|slack|discord"
     ),
-    workspace: str = typer.Option(".", help="Agent çalışma kökü"),
-    port: int = typer.Option(8080, help="WhatsApp webhook portu"),
+    workspace: str = typer.Option(".", help="Agent working root"),
+    port: int = typer.Option(8080, help="WhatsApp webhook port"),
 ) -> None:
-    """Mesajlaşma gateway'ini başlat."""
+    """Start the messaging gateway."""
     import asyncio
     import logging
 
@@ -36,7 +36,7 @@ def gateway_start(
     if cfg.security.gateway_allow_all_users:
         console.print(
             f"[{PALETTE['risk']}]UYARI: gateway_allow_all_users=true — "
-            f"herkes bota erişebilir. Üretimde kapatın![/]"
+            f"anyone can reach the bot. Disable in production![/]"
         )
     if channel == "telegram":
         from milyonus.gateway.adapters.telegram import TelegramAdapter
@@ -59,7 +59,7 @@ def gateway_start(
         adapter = DiscordAdapter()
         detail = "Gateway WebSocket"
     else:
-        console.print(f"[{PALETTE['risk']}]Desteklenmeyen kanal: {channel}[/]")
+        console.print(f"[{PALETTE['risk']}]Unsupported channel: {channel}[/]")
         raise typer.Exit(code=1)
 
     from milyonus.gateway.server import GatewayServer
@@ -67,20 +67,20 @@ def gateway_start(
     server = GatewayServer(cfg, [adapter], workspace=Path(workspace).resolve())
     console.print(
         f"[bold {PALETTE['cyan_400']}]{GLYPH} Gateway[/] "
-        f"[dim]{channel} · {detail} · varsayılan: reddet (pairing gerekli)[/]"
+        f"[dim]{channel} · {detail} · default: deny (pairing required)[/]"
     )
     try:
         asyncio.run(server.run())
     except KeyboardInterrupt:
-        console.print(f"\n[{PALETTE['chrome_500']}]Gateway durduruldu.[/]")
+        console.print(f"\n[{PALETTE['chrome_500']}]Gateway stopped.[/]")
 
 
 @gateway_app.command("pair")
 def gateway_pair(channel: str = typer.Argument("telegram")) -> None:
-    """Yeni bir eşleştirme kodu üret (1 saat geçerli)."""
+    """Generate a new pairing code (valid for 1 hour)."""
     pm = PairingManager()
     code = pm.new_code(channel)
     console.print(
-        f"[bold {PALETTE['cyan_400']}]{GLYPH} Eşleştirme kodu ({channel}):[/] [bold]{code}[/]"
+        f"[bold {PALETTE['cyan_400']}]{GLYPH} Pairing code ({channel}):[/] [bold]{code}[/]"
     )
-    console.print(f"[dim]Kullanıcı botta `/pair {code}` göndersin. Kod 1 saat geçerli.[/]")
+    console.print(f"[dim]Have the user send `/pair {code}` to the bot. Code valid for 1 hour.[/]")

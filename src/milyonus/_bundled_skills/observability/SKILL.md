@@ -27,7 +27,8 @@ metadata:
 - Seviyeleri doğru kullan: DEBUG/INFO/WARN/ERROR. Secret'ları redakte et.
 ```python
 import logging, json
-logging.info(json.dumps({"event":"login","user_id":42,"ms":83}))
+
+logging.info(json.dumps({"event": "login", "user_id": 42, "ms": 83}))
 ```
 
 ## Metrikler (ne izlenir)

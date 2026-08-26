@@ -34,47 +34,47 @@ class Check:
 def _python_check() -> Check:
     v = sys.version_info
     ok = (v.major, v.minor) >= (3, 12)
-    return Check("Python", ok, f"{v.major}.{v.minor}.{v.micro} (>=3.12 gerekli)")
+    return Check("Python", ok, f"{v.major}.{v.minor}.{v.micro} (>=3.12 required)")
 
 
 def _layout_check() -> Check:
     root = ensure_layout()
     mode = stat.S_IMODE(root.stat().st_mode)
     ok = mode == 0o700
-    detail = f"{root} (mod {oct(mode)}; 0o700 önerilir)"
-    return Check("Veri dizini", ok, detail)
+    detail = f"{root} (mode {oct(mode)}; 0o700 recommended)"
+    return Check("Data dir", ok, detail)
 
 
 def _config_check() -> Check:
     path = config_file()
     if not path.exists():
-        return Check("Yapılandırma", True, f"{path} yok — varsayılanlar kullanılıyor")
+        return Check("Config", True, f"{path} missing — using defaults")
     try:
         load_config(path)
-        return Check("Yapılandırma", True, f"{path} geçerli")
+        return Check("Config", True, f"{path} valid")
     except ConfigError as exc:
         first = str(exc).splitlines()[0]
-        return Check("Yapılandırma", False, first)
+        return Check("Config", False, first)
 
 
 def _env_check() -> Check:
     private = env_file_is_private()
     if private is None:
-        return Check("Secret dosyası", True, f"{env_file()} yok (opsiyonel)")
+        return Check("Secret file", True, f"{env_file()} missing (optional)")
     if not private:
         return Check(
-            "Secret dosyası",
+            "Secret file",
             False,
-            f"{env_file()} çok açık — `chmod 600` çalıştırın",
+            f"{env_file()} too open — run `chmod 600`",
         )
-    return Check("Secret dosyası", True, f"{env_file()} (mod 0600)")
+    return Check("Secret file", True, f"{env_file()} (mode 0600)")
 
 
 def _provider_check() -> Check:
     try:
         cfg = load_config()
     except ConfigError:
-        return Check("Sağlayıcı", False, "yapılandırma okunamadı")
+        return Check("Provider", False, "could not read config")
     name = cfg.provider.name
     env_key = {
         "anthropic": "ANTHROPIC_API_KEY",
@@ -82,10 +82,10 @@ def _provider_check() -> Check:
         "local": None,
     }[name]
     if env_key is None:
-        return Check("Sağlayıcı", True, f"{name} (yerel — anahtar gerekmez)")
+        return Check("Provider", True, f"{name} (local — no key required)")
     present = bool(os.environ.get(env_key))
-    detail = f"{name} · {env_key} {'bulundu' if present else 'AYARLANMAMIŞ'}"
-    return Check("Sağlayıcı", present, detail)
+    detail = f"{name} · {env_key} {'found' if present else 'NOT SET'}"
+    return Check("Provider", present, detail)
 
 
 def run_doctor() -> int:
@@ -106,20 +106,20 @@ def run_doctor() -> int:
     ]
 
     table = Table(show_header=True, header_style=f"bold {PALETTE['chrome_200']}")
-    table.add_column("Kontrol")
-    table.add_column("Durum")
-    table.add_column("Ayrıntı", overflow="fold")
+    table.add_column("Check")
+    table.add_column("Status")
+    table.add_column("Detail", overflow="fold")
     for c in checks:
-        badge = f"[{PALETTE['ok']}]● tamam[/]" if c.ok else f"[{PALETTE['risk']}]● sorun[/]"
+        badge = f"[{PALETTE['ok']}]● ok[/]" if c.ok else f"[{PALETTE['risk']}]● issue[/]"
         table.add_row(c.name, badge, c.detail)
     console.print(table)
 
     failed = [c for c in checks if not c.ok]
     if failed:
         console.print(
-            f"[{PALETTE['warn']}]{len(failed)} kontrol dikkat gerektiriyor.[/] "
-            "Provider anahtarı için `milyonus setup` çalıştırın."
+            f"[{PALETTE['warn']}]{len(failed)} check(s) need attention.[/] "
+            "Run `milyonus setup` to configure a provider key."
         )
         return 1
-    console.print(f"[{PALETTE['ok']}]Her şey yolunda.[/]")
+    console.print(f"[{PALETTE['ok']}]All good.[/]")
     return 0

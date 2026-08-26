@@ -58,13 +58,13 @@ class SlackAdapter:
         await self._client.post(
             _POST_MESSAGE,
             headers={"Authorization": f"Bearer {self._token}"},
-            json={"channel": message.user_id, "text": message.text or "(boş)"},
+            json={"channel": message.user_id, "text": message.text or "(empty)"},
         )
 
     async def ask_approval(self, user_id: str, prompt: str) -> bool:
         import asyncio
 
-        await self.send(OutboundMessage(user_id, f"{prompt}\nCevap: evet / hayır"))
+        await self.send(OutboundMessage(user_id, f"{prompt}\nReply: yes / no"))
         fut: asyncio.Future[str] = asyncio.get_event_loop().create_future()
         self._approval_waiters[user_id] = fut
         try:
@@ -147,7 +147,7 @@ class SlackAdapter:
         import asyncio
 
         if not self._token:
-            raise RuntimeError("SLACK_BOT_TOKEN ayarlı olmalı.")
+            raise RuntimeError("SLACK_BOT_TOKEN must be set.")
         asyncio.create_task(self._dispatch(handler))
         server = WebhookServer(self._on_request, host=self.host, port=self.port)
         await server.serve()

@@ -48,23 +48,23 @@ class SkillParseError(Exception):
 
 def _split_frontmatter(text: str) -> tuple[dict, str]:
     if not text.startswith("---"):
-        raise SkillParseError("SKILL.md YAML frontmatter ile başlamalı (---)")
+        raise SkillParseError("SKILL.md must start with YAML frontmatter (---)")
     parts = text.split("---", 2)
     if len(parts) < 3:
-        raise SkillParseError("frontmatter kapanışı (---) bulunamadı")
+        raise SkillParseError("frontmatter closing (---) not found")
     try:
         meta = yaml.safe_load(parts[1]) or {}
     except yaml.YAMLError as exc:
-        raise SkillParseError(f"YAML hatası: {exc}") from exc
+        raise SkillParseError(f"YAML error: {exc}") from exc
     if not isinstance(meta, dict):
-        raise SkillParseError("frontmatter bir eşleme (mapping) olmalı")
+        raise SkillParseError("frontmatter must be a mapping")
     return meta, parts[2].strip()
 
 
 def parse_skill_md(text: str, path: Path) -> Skill:
     raw, body = _split_frontmatter(text)
     if "name" not in raw or "description" not in raw:
-        raise SkillParseError("frontmatter 'name' ve 'description' içermeli")
+        raise SkillParseError("frontmatter must include 'name' and 'description'")
     meta_block = raw.get("metadata") if isinstance(raw.get("metadata"), dict) else {}
     # Branded namespace is "milyonusagentskill"; "milyonus" is read as a fallback.
     ns = meta_block.get("milyonusagentskill") or meta_block.get("milyonus") or {}

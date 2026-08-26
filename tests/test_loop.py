@@ -131,7 +131,7 @@ async def test_budget_stop():
     prov = ScriptedProvider([[_text("x"), *_end()]])
     loop = AgentLoop(prov, ToolRegistry(), "sys", budget=Budget(max_iterations=0))
     result = await loop.run_turn([])
-    assert "bütçe" in result
+    assert "budget" in result
 
 
 async def test_streaming_sink():

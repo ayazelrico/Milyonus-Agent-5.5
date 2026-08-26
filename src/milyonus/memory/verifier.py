@@ -68,7 +68,7 @@ class RuleBasedVerifier:
             sig = ", ".join(f.signal for f in findings)
             return Verdict(
                 approved=False,
-                reason=f"tarayıcı işaretledi: {sig}",
+                reason=f"scanner flagged: {sig}",
                 is_instruction=any(
                     f.signal in ("imperative", "instruction_override") for f in findings
                 ),
@@ -76,12 +76,12 @@ class RuleBasedVerifier:
         if not _source_competent(content, source_kind):
             return Verdict(
                 approved=False,
-                reason="kaynak bu iddia türü için yetkin değil",
+                reason="source not competent for this claim type",
                 source_competent=False,
             )
         # Contradiction detection beyond exact-match dedup is the model
         # verifier's job; the rule layer only guards injection + competence.
-        return Verdict(approved=True, reason="kural tabanlı kontrol geçildi")
+        return Verdict(approved=True, reason="passed rule-based checks")
 
 
 _VERIFIER_SYSTEM = """You are a strict memory-verification checker for an AI \
@@ -155,5 +155,5 @@ def _parse_json(text: str) -> dict:
     start = text.find("{")
     end = text.rfind("}")
     if start == -1 or end == -1:
-        raise ValueError("verdict JSON bulunamadı")
+        raise ValueError("verdict JSON not found")
     return json.loads(text[start : end + 1])

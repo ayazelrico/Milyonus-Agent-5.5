@@ -36,7 +36,7 @@ class TelegramAdapter:
 
     async def send(self, message: OutboundMessage) -> None:
         # Telegram caps messages at 4096 chars; chunk long answers.
-        text = message.text or "(boş)"
+        text = message.text or "(empty)"
         for i in range(0, len(text), 4000):
             await self._client.post(
                 self._url("sendMessage"),
@@ -44,7 +44,7 @@ class TelegramAdapter:
             )
 
     async def ask_approval(self, user_id: str, prompt: str) -> bool:
-        await self.send(OutboundMessage(user_id, f"{prompt}\nCevap: evet / hayır"))
+        await self.send(OutboundMessage(user_id, f"{prompt}\nReply: yes / no"))
         loop = asyncio.get_event_loop()
         fut: asyncio.Future[str] = loop.create_future()
         self._approval_waiters[user_id] = fut
@@ -58,7 +58,7 @@ class TelegramAdapter:
 
     async def start(self, handler: MessageHandler) -> None:
         if not self._token:
-            raise RuntimeError("TELEGRAM_BOT_TOKEN ayarlı değil.")
+            raise RuntimeError("TELEGRAM_BOT_TOKEN is not set.")
         while True:
             try:
                 resp = await self._client.get(

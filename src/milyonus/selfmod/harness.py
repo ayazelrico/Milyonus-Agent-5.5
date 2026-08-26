@@ -56,7 +56,7 @@ class SelfModHarness:
     def snapshot(self, label: str) -> SnapshotResult:
         """Commit the current tree as a restore point. Returns the commit ref."""
         if not self.is_git_repo():
-            return SnapshotResult(False, "", "git deposu değil — snapshot devre dışı")
+            return SnapshotResult(False, "", "not a git repo — snapshots disabled")
         self._git("add", "-A")
         stamp = time.strftime("%Y%m%d-%H%M%S")
         tag = f"milyonus-auto-{stamp}"
@@ -102,9 +102,9 @@ class SelfModHarness:
     def rollback(self, ref: str = "HEAD~1") -> str:
         """Hard-reset the working tree to a prior snapshot."""
         if not self.is_git_repo():
-            return "git deposu değil — geri alma yapılamaz"
+            return "not a git repo — cannot roll back"
         res = self._git("reset", "--hard", ref)
-        return res.stdout.strip() or res.stderr.strip() or f"geri alındı: {ref}"
+        return res.stdout.strip() or res.stderr.strip() or f"rolled back: {ref}"
 
     def log(self, *, limit: int = 20) -> list[str]:
         """List recent self-modification snapshots."""
@@ -123,10 +123,10 @@ class SelfModHarness:
             await mutate()
         except Exception as exc:  # noqa: BLE001 - report and roll back
             self.rollback(snap.ref)
-            return (False, f"değişiklik hata verdi, geri alındı: {exc}")
+            return (False, f"change errored, rolled back: {exc}")
         gate = await self.test_gate(run_doctor=run_doctor)
         if not gate.passed:
             self.rollback(snap.ref)
             tail = gate.output.strip().splitlines()[-3:]
-            return (False, "test kapısı kırmızı — geri alındı:\n" + "\n".join(tail))
-        return (True, f"değişiklik kabul edildi ({label})")
+            return (False, "test gate red — rolled back:\n" + "\n".join(tail))
+        return (True, f"change accepted ({label})")

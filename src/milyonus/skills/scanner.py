@@ -41,11 +41,11 @@ class SkillFinding:
 def scan_skill(text: str) -> list[SkillFinding]:
     findings: list[SkillFinding] = []
     if _DESTRUCTIVE.search(text):
-        findings.append(SkillFinding("destructive_command", "danger", "yıkıcı komut"))
+        findings.append(SkillFinding("destructive_command", "danger", "destructive command"))
     if _PIPE_TO_SHELL.search(text):
-        findings.append(SkillFinding("pipe_to_interpreter", "danger", "curl|bash tipi kalıp"))
+        findings.append(SkillFinding("pipe_to_interpreter", "danger", "curl|bash-style pattern"))
     if _EXFIL.search(text):
-        findings.append(SkillFinding("exfiltration", "danger", "veri sızdırma kalıbı"))
+        findings.append(SkillFinding("exfiltration", "danger", "data-exfiltration pattern"))
     for f in scan_prose(text):
         v: Verdict = "danger" if f.severity == "high" else "caution"
         findings.append(SkillFinding(f"prose:{f.signal}", v, f.detail))

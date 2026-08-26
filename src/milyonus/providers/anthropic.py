@@ -79,7 +79,7 @@ class AnthropicProvider:
 
     def _headers(self) -> dict[str, str]:
         if not self._api_key:
-            raise ProviderError("ANTHROPIC_API_KEY ayarlı değil. `~/.milyonus/.env` içine ekleyin.")
+            raise ProviderError("ANTHROPIC_API_KEY is not set. Add it to `~/.milyonus/.env`.")
         return {
             "x-api-key": self._api_key,
             "anthropic-version": _API_VERSION,

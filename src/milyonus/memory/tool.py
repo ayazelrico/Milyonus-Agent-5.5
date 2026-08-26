@@ -25,7 +25,7 @@ def make_memory_tools(
     async def propose(args: dict[str, Any]) -> str:
         content = args["content"].strip()
         if not content:
-            return "boş bellek önerisi yok sayıldı"
+            return "empty memory proposal ignored"
         # An agent proposing about the user's own stated preference is treated as
         # user-direct only when the caller marks it so; default is agent-observed.
         source = args.get("source_kind", default_source)
@@ -39,34 +39,34 @@ def make_memory_tools(
         )
         state = await pipeline.process_one(mid)
         if state == "active":
-            return f"belleğe eklendi (doğrulandı): {content[:60]}"
+            return f"added to memory (verified): {content[:60]}"
         if state == "rejected":
             item = pipeline.store.get(mid)
-            return f"reddedildi: {item.verdict or 'doğrulama başarısız'}"
-        return "karantinada — doğrulama/onay bekliyor"
+            return f"rejected: {item.verdict or 'verification failed'}"
+        return "quarantined — awaiting verification/approval"
 
     async def search(args: dict[str, Any]) -> str:
         query = args.get("query", "").casefold()
         hits = [m for m in pipeline.store.active() if query in m.content.casefold()]
         if not hits:
-            return "eşleşen bellek yok"
+            return "no matching memory"
         return "\n".join(f"[{m.trust_tier}] {m.content}" for m in hits[:20])
 
     return [
         Tool(
             name="memory_propose",
             description=(
-                "Kalıcı bellek için bir aday önerir. Doğrudan yazmaz — aday "
-                "karantinaya alınır ve doğrulamadan geçerse eklenir."
+                "Propose a candidate for durable memory. Does not write directly — the "
+                "candidate is quarantined and added only if it passes verification."
             ),
             parameters={
                 "type": "object",
                 "properties": {
-                    "content": {"type": "string", "description": "Hatırlanacak olgu"},
+                    "content": {"type": "string", "description": "The fact to remember"},
                     "source_kind": {
                         "type": "string",
                         "enum": ["user-direct", "agent-observed"],
-                        "description": "Kullanıcı doğrudan söylediyse 'user-direct'",
+                        "description": "Use 'user-direct' if the user said it directly",
                     },
                 },
                 "required": ["content"],
@@ -76,7 +76,7 @@ def make_memory_tools(
         ),
         Tool(
             name="memory_search",
-            description="Doğrulanmış kalıcı bellekte arama yapar.",
+            description="Search verified durable memory.",
             parameters={
                 "type": "object",
                 "properties": {"query": {"type": "string"}},

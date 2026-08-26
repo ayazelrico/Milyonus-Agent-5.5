@@ -10,31 +10,31 @@ from rich.console import Console
 from milyonus.brand import GLYPH, PALETTE
 from milyonus.selfmod.harness import SelfModHarness
 
-selfmod_app = typer.Typer(help="Kendini değiştirme anlık görüntülerini yönet.")
+selfmod_app = typer.Typer(help="Manage self-modification snapshots.")
 console = Console()
 
 
 @selfmod_app.command("log")
 def selfmod_log() -> None:
-    """Kendi kendine yapılan değişiklik anlık görüntülerini listele."""
+    """List self-modification snapshots."""
     h = SelfModHarness(Path.cwd())
     if not h.is_git_repo():
-        console.print(f"[{PALETTE['warn']}]Bu dizin bir git deposu değil.[/]")
+        console.print(f"[{PALETTE['warn']}]This directory is not a git repo.[/]")
         raise typer.Exit(code=1)
     entries = h.log()
     if not entries:
-        console.print(f"[dim]{GLYPH} kendi kendine değişiklik yok.[/]")
+        console.print(f"[dim]{GLYPH} no self-modifications.[/]")
         raise typer.Exit()
-    console.print(f"[bold]{GLYPH} Selfmod anlık görüntüleri[/]")
+    console.print(f"[bold]{GLYPH} Selfmod snapshots[/]")
     for e in entries:
         console.print(f"  {e}")
 
 
 @selfmod_app.command("rollback")
 def selfmod_rollback(
-    ref: str = typer.Argument("HEAD~1", help="Geri dönülecek commit/etiket"),
+    ref: str = typer.Argument("HEAD~1", help="Commit/tag to roll back to"),
 ) -> None:
-    """Bir önceki (veya belirtilen) anlık görüntüye geri dön."""
+    """Roll back to the previous (or given) snapshot."""
     h = SelfModHarness(Path.cwd())
     result = h.rollback(ref)
     console.print(f"[{PALETTE['quarantine']}]{GLYPH} {result}[/]")

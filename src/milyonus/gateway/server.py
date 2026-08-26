@@ -105,10 +105,10 @@ class GatewayServer:
             if decision == "auto":
                 return True
             if decision == "block":
-                await adapter.send(OutboundMessage(msg.user_id, f"✗ engellendi: {reason}"))
+                await adapter.send(OutboundMessage(msg.user_id, f"✗ blocked: {reason}"))
                 return False
             return await adapter.ask_approval(
-                msg.user_id, f"⚠ onay: {call.name} {call.arguments} ({reason})"
+                msg.user_id, f"⚠ approve: {call.name} {call.arguments} ({reason})"
             )
 
         session = self._get_session(msg)
@@ -137,8 +137,8 @@ class GatewayServer:
             await adapter.send(
                 OutboundMessage(
                     msg.user_id,
-                    "Bu botu kullanmak için eşleştirme gerekli. "
-                    "Operatörden bir kod alıp `/pair <kod>` gönderin.",
+                    "Pairing is required to use this bot. "
+                    "Get a code from the operator and send `/pair <code>`.",
                 )
             )
             return
@@ -149,17 +149,17 @@ class GatewayServer:
             loop = self._build_loop(adapter, msg)
             answer = await loop.run_turn(session.history)
         except ProviderError as exc:
-            answer = f"Sağlayıcı hatası: {exc}"
+            answer = f"Provider error: {exc}"
         _log.info("reply -> %s: %s", msg.user_id, (answer or "")[:80])
-        await adapter.send(OutboundMessage(msg.user_id, answer or "(boş yanıt)"))
+        await adapter.send(OutboundMessage(msg.user_id, answer or "(empty response)"))
 
     async def _handle_pair(self, adapter: ChannelAdapter, msg: InboundMessage) -> None:
         parts = msg.text.strip().split()
         if len(parts) < 2:
-            await adapter.send(OutboundMessage(msg.user_id, "Kullanım: /pair <kod>"))
+            await adapter.send(OutboundMessage(msg.user_id, "Usage: /pair <code>"))
             return
         if not self.pairing.can_request(msg.channel, msg.user_id):
-            await adapter.send(OutboundMessage(msg.user_id, "Çok sık deneme. Biraz bekleyin."))
+            await adapter.send(OutboundMessage(msg.user_id, "Too many attempts. Please wait."))
             return
         self.pairing.mark_request(msg.channel, msg.user_id)
         ok, message = self.pairing.redeem(msg.channel, msg.user_id, parts[1])
@@ -185,7 +185,7 @@ class GatewayServer:
                     raise
                 except Exception as exc:  # noqa: BLE001 - resilience wrapper
                     _log.warning(
-                        "%s adapter hata verdi, %.0fs sonra yeniden bağlanılıyor: %s",
+                        "%s adapter errored, reconnecting in %.0fs: %s",
                         adapter.name,
                         backoff,
                         exc,

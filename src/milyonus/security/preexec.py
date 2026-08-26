@@ -28,22 +28,22 @@ _BLOCK_PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
     (
         "recursive_root_delete",
         re.compile(r"rm\s+-[a-z]*r[a-z]*f?\s+(--no-preserve-root\s+)?(/|~|\$HOME)(\s|$)"),
-        "kök dizini özyinelemeli silme",
+        "recursive delete of root directory",
     ),
-    ("mkfs", re.compile(r"\bmkfs(\.\w+)?\s"), "dosya sistemi biçimlendirme"),
-    ("disk_overwrite", re.compile(r"\bdd\s+if=.*\s+of=/dev/(sd|nvme|disk)"), "disk üzerine yazma"),
+    ("mkfs", re.compile(r"\bmkfs(\.\w+)?\s"), "filesystem format"),
+    ("disk_overwrite", re.compile(r"\bdd\s+if=.*\s+of=/dev/(sd|nvme|disk)"), "disk overwrite"),
     (
         "pipe_to_shell",
         re.compile(r"(curl|wget)\s+[^\n|]*\|\s*(sudo\s+)?(bash|sh|zsh|python)", re.I),
-        "curl|bash tipi kalıp",
+        "curl|bash-style pattern",
     ),
 ]
 
 _WARN_PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
-    ("chmod_777", re.compile(r"chmod\s+-R?\s*777"), "aşırı geniş izin (777)"),
-    ("sudo", re.compile(r"\bsudo\b"), "yükseltilmiş ayrıcalık"),
-    ("unguarded_delete", re.compile(r"\brm\s+-[a-z]*r"), "özyinelemeli silme"),
-    ("db_drop", re.compile(r"\bdrop\s+(table|database)\b", re.I), "veritabanı düşürme"),
+    ("chmod_777", re.compile(r"chmod\s+-R?\s*777"), "overly broad permissions (777)"),
+    ("sudo", re.compile(r"\bsudo\b"), "elevated privilege"),
+    ("unguarded_delete", re.compile(r"\brm\s+-[a-z]*r"), "recursive delete"),
+    ("db_drop", re.compile(r"\bdrop\s+(table|database)\b", re.I), "database drop"),
 ]
 
 

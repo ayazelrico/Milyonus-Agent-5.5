@@ -78,7 +78,7 @@ async def test_repro_gate_blocks_promotion(tmp_path):
     meta = SkillMeta(name="np", description="d")
     result = await mgr.create(meta, "# body\nadım")
     assert not result.ok
-    assert "tekrarlanabilirlik" in result.message
+    assert "reproducibility" in result.message
     assert not (tmp_path / "live" / "np").exists()
 
 

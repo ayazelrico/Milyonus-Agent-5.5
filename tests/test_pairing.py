@@ -42,7 +42,7 @@ def test_lockout_after_failures(tmp_path):
         m.redeem("telegram", "u", "BADCODE1")
     ok, msg = m.redeem("telegram", "u", "BADCODE1")
     assert not ok
-    assert "kilitli" in msg
+    assert "locked" in msg
 
 
 def test_code_wrong_channel(tmp_path):
@@ -80,4 +80,4 @@ def test_expired_code(tmp_path, monkeypatch):
     monkeypatch.setattr("milyonus.gateway.pairing.time.time", lambda: real + 4000)
     ok, msg = m.redeem("telegram", "u", code)
     assert not ok
-    assert "süresi dolmuş" in msg or "geçersiz" in msg
+    assert "expired" in msg or "invalid" in msg

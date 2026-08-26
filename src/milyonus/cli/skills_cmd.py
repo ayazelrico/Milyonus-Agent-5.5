@@ -9,24 +9,24 @@ from rich.table import Table
 from milyonus.brand import GLYPH, PALETTE
 from milyonus.skills.engine import SkillEngine
 
-skills_app = typer.Typer(help="Skill'leri görüntüle ve yönet.")
+skills_app = typer.Typer(help="Inspect and manage skills.")
 console = Console()
 
 
 @skills_app.command("list")
 def skills_list() -> None:
-    """Kayıtlı skill'leri listele."""
+    """List registered skills."""
     eng = SkillEngine()
     skills = eng.load_all()
     if not skills:
-        console.print(f"[dim]{GLYPH} kayıtlı skill yok.[/]")
+        console.print(f"[dim]{GLYPH} no registered skills.[/]")
         raise typer.Exit()
-    table = Table(title=f"{GLYPH} Skill'ler")
-    table.add_column("Ad", style=f"bold {PALETTE['cyan_400']}")
-    table.add_column("Kategori")
-    table.add_column("Açıklama", overflow="fold")
-    table.add_column("Kaynak", style="dim")
-    table.add_column("Sürüm", style="dim")
+    table = Table(title=f"{GLYPH} Skills")
+    table.add_column("Name", style=f"bold {PALETTE['cyan_400']}")
+    table.add_column("Category")
+    table.add_column("Description", overflow="fold")
+    table.add_column("Source", style="dim")
+    table.add_column("Version", style="dim")
     for s in skills:
         table.add_row(
             s.meta.name,
@@ -40,25 +40,25 @@ def skills_list() -> None:
 
 @skills_app.command("view")
 def skills_view(name: str, ref: str = typer.Argument(None)) -> None:
-    """Bir skill'in içeriğini göster."""
+    """Show a skill's content."""
     eng = SkillEngine()
     console.print(eng.view(name, ref))
 
 
 @skills_app.command("why")
 def skills_why(name: str) -> None:
-    """Bir skill'in kökenini (provenance) göster."""
+    """Show a skill's provenance."""
     eng = SkillEngine()
     skill = eng.get(name)
     if skill is None:
-        console.print(f"[{PALETTE['risk']}]bulunamadı: {name}[/]")
+        console.print(f"[{PALETTE['risk']}]not found: {name}[/]")
         raise typer.Exit(code=1)
     m = skill.meta
     console.print(f"[bold]{GLYPH} {m.name}[/] v{m.version}")
-    console.print(f"  kaynak    : {m.provenance}")
-    console.print(f"  kategori  : {m.category}")
-    console.print(f"  platformlar: {', '.join(m.platforms) or 'tümü'}")
-    console.print(f"  yol       : {skill.path}")
+    console.print(f"  source    : {m.provenance}")
+    console.print(f"  category  : {m.category}")
+    console.print(f"  platforms : {', '.join(m.platforms) or 'all'}")
+    console.print(f"  path      : {skill.path}")
     refs = skill.reference_files()
     if refs:
-        console.print(f"  referanslar: {', '.join(refs)}")
+        console.print(f"  references: {', '.join(refs)}")

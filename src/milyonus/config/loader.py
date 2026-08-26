@@ -28,8 +28,8 @@ def load_config(path: Path | None = None) -> MilyonusConfig:
     try:
         raw = tomllib.loads(path.read_text(encoding="utf-8"))
     except tomllib.TOMLDecodeError as exc:
-        raise ConfigError(f"{path}: TOML söz dizimi hatası: {exc}") from exc
+        raise ConfigError(f"{path}: TOML syntax error: {exc}") from exc
     try:
         return MilyonusConfig.model_validate(raw)
     except ValidationError as exc:
-        raise ConfigError(f"{path}: geçersiz yapılandırma:\n{exc}") from exc
+        raise ConfigError(f"{path}: invalid configuration:\n{exc}") from exc

@@ -66,7 +66,7 @@ class AgentLoop:
 
         while True:
             if self.budget.exhausted():
-                note = "(bütçe tükendi — görev burada durduruldu)"
+                note = "(budget exhausted — task stopped here)"
                 history.append(Message(role="assistant", content=note))
                 return note
 
@@ -132,7 +132,7 @@ class AgentLoop:
                         results.append(
                             ToolResult(
                                 call_id=call.id,
-                                content="(kullanıcı bu aracı reddetti)",
+                                content="(user denied this tool)",
                                 is_error=True,
                             )
                         )

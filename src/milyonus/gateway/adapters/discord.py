@@ -42,7 +42,7 @@ class DiscordAdapter:
         self._approval_waiters: dict[str, asyncio.Future[str]] = {}
 
     async def send(self, message: OutboundMessage) -> None:
-        text = message.text or "(boş)"
+        text = message.text or "(empty)"
         for i in range(0, len(text), 1900):
             await self._client.post(
                 f"{_API}/channels/{message.user_id}/messages",
@@ -51,7 +51,7 @@ class DiscordAdapter:
             )
 
     async def ask_approval(self, user_id: str, prompt: str) -> bool:
-        await self.send(OutboundMessage(user_id, f"{prompt}\nCevap: evet / hayır"))
+        await self.send(OutboundMessage(user_id, f"{prompt}\nReply: yes / no"))
         fut: asyncio.Future[str] = asyncio.get_event_loop().create_future()
         self._approval_waiters[user_id] = fut
         try:
@@ -99,10 +99,10 @@ class DiscordAdapter:
             import websockets
         except ImportError as exc:  # pragma: no cover - env-dependent
             raise RuntimeError(
-                "Discord için 'websockets' gerekli: pip install milyonus-agent[discord]"
+                "Discord requires 'websockets': pip install milyonus-agent[discord]"
             ) from exc
         if not self._token:
-            raise RuntimeError("DISCORD_BOT_TOKEN ayarlı olmalı.")
+            raise RuntimeError("DISCORD_BOT_TOKEN must be set.")
 
         async with websockets.connect(_GATEWAY, max_size=None) as ws:
             hello = json.loads(await ws.recv())
