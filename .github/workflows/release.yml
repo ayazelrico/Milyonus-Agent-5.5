@@ -5,12 +5,13 @@ on:
     tags: ["v*"]
 
 permissions:
-  contents: write
-  id-token: write   # for PyPI Trusted Publishing
+  contents: write   # create GitHub releases
+  id-token: write   # PyPI Trusted Publishing (OIDC, no token stored)
 
 jobs:
-  build:
+  pypi:
     runs-on: ubuntu-latest
+    environment: release   # gate + where trusted publishing is configured
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
@@ -20,25 +21,39 @@ jobs:
       - run: uv sync --extra dev
       - name: Test
         run: uv run pytest -q
-      - name: Build wheel
+      - name: Build wheel + sdist
         run: uv build
       - name: GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: dist/*
           generate_release_notes: true
-      # PyPI publish via Trusted Publishing (configure the publisher on PyPI).
-      # - name: Publish to PyPI
-      #   run: uv publish
+      - name: Publish to PyPI (Trusted Publishing)
+        run: uv publish
+        # Requires a PyPI Trusted Publisher configured for this repo +
+        # environment "release". No API token needed. See docs/publishing.md.
 
   docker:
     runs-on: ubuntu-latest
-    needs: build
+    needs: pypi
     steps:
       - uses: actions/checkout@v4
-      - name: Build image (push requires registry creds)
-        run: docker build -f deploy/Dockerfile -t milyonus/agent:${{ github.ref_name }} .
-      # - name: Push
-      #   run: |
-      #     echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u milyonus --password-stdin
-      #     docker push milyonus/agent:${{ github.ref_name }}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push (amd64 + arm64)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            milyonus/agent:latest
+            milyonus/agent:${{ github.ref_name }}

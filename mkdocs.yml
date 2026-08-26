@@ -20,6 +20,7 @@ nav:
   - Editor (ACP): acp.md
   - Docker: docker.md
   - Production: production.md
+  - Publishing: publishing.md
   - Architecture Decisions: adr/README.md
 markdown_extensions:
   - admonition
