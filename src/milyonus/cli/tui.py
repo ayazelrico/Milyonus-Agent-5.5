@@ -1,0 +1,126 @@
+"""Interactive terminal session — the primary development surface.
+
+Wires provider + tools + loop together and renders a live conversation with the
+✦ prompt. Assistant text streams token-by-token; tool calls appear as labeled
+panels; danger-class tools trigger an inline approval prompt. Ctrl+C interrupts
+the current turn (not the session); Ctrl+D / empty EOF exits.
+"""
+
+from __future__ import annotations
+
+import asyncio
+from pathlib import Path
+
+from prompt_toolkit import PromptSession
+from prompt_toolkit.patch_stdout import patch_stdout
+from rich.console import Console
+
+from milyonus.brand import GLYPH, PALETTE, PRODUCT, PROMPT
+from milyonus.config.env import load_env
+from milyonus.config.loader import load_config
+from milyonus.core.budget import Budget
+from milyonus.core.loop import AgentLoop
+from milyonus.core.store import SessionStore
+from milyonus.prompt.builder import build_system_prompt
+from milyonus.providers.base import Message, ProviderError, ToolCall
+from milyonus.providers.router import build_provider
+from milyonus.tools.fs.tools import make_fs_tools
+from milyonus.tools.registry import ToolRegistry
+from milyonus.tools.terminal.tools import make_shell_tool
+
+
+def _make_registry(root: Path) -> ToolRegistry:
+    reg = ToolRegistry()
+    for tool in make_fs_tools(root):
+        reg.register(tool)
+    reg.register(make_shell_tool(root))
+    return reg
+
+
+async def _run_session(root: Path) -> int:
+    console = Console()
+    load_env()
+    try:
+        cfg = load_config()
+    except Exception as exc:
+        console.print(f"[{PALETTE['risk']}]Yapılandırma hatası:[/] {exc}")
+        return 1
+
+    provider = build_provider(cfg.provider)
+    registry = _make_registry(root)
+    system = build_system_prompt()
+    store = SessionStore()
+    sid = store.create_session("cli", user_ref="local")
+    budget = Budget(max_iterations=50, max_tokens=cfg.provider.max_output_tokens * 200)
+
+    console.print(
+        f"[bold {PALETTE['cyan_400']}]{GLYPH} {PRODUCT}[/] "
+        f"[dim]{provider.name}:{provider.model} · oturum {sid}[/]"
+    )
+    console.print(f"[dim]Çıkış için Ctrl+D. Çalışma kökü: {root}[/]\n")
+
+    async def on_text(chunk: str) -> None:
+        console.print(chunk, end="", markup=False, highlight=False)
+
+    async def on_tool(call: ToolCall) -> None:
+        console.print(
+            f"\n[{PALETTE['blue_500']}]→ araç[/] [bold]{call.name}[/] [dim]{call.arguments}[/]"
+        )
+
+    async def approve(call: ToolCall, risk: str) -> bool:
+        color = PALETTE["risk"] if risk == "danger" else PALETTE["warn"]
+        console.print(
+            f"\n[{color}]⚠ onay gerekli[/] [bold]{call.name}[/] ({risk}) [dim]{call.arguments}[/]"
+        )
+        ans = await asyncio.to_thread(input, "  izin ver? [e/H] ")
+        return ans.strip().lower() in ("e", "evet", "y", "yes")
+
+    loop = AgentLoop(
+        provider=provider,
+        tools=registry,
+        system_prompt=system,
+        budget=budget,
+        approve=approve,
+        on_text=on_text,
+        on_tool=on_tool,
+        max_output_tokens=cfg.provider.max_output_tokens,
+    )
+
+    history: list[Message] = []
+    ptk: PromptSession = PromptSession()
+    turn = 0
+    while True:
+        try:
+            with patch_stdout():
+                user_input = await ptk.prompt_async(f"\n{PROMPT} ")
+        except (EOFError, KeyboardInterrupt):
+            console.print(f"\n[{PALETTE['chrome_500']}]Görüşürüz {GLYPH}[/]")
+            break
+
+        user_input = user_input.strip()
+        if not user_input:
+            continue
+        if user_input in ("/exit", "/quit"):
+            break
+
+        history.append(Message(role="user", content=user_input))
+        store.append_message(sid, turn=turn, role="user", content=user_input)
+        turn += 1
+        try:
+            answer = await loop.run_turn(history)
+        except ProviderError as exc:
+            console.print(f"\n[{PALETTE['risk']}]Sağlayıcı hatası:[/] {exc}")
+            continue
+        except KeyboardInterrupt:
+            console.print(f"\n[{PALETTE['warn']}](tur kesildi)[/]")
+            continue
+        store.append_message(sid, turn=turn, role="assistant", content=answer)
+        turn += 1
+        console.print()  # newline after streamed answer
+
+    store.close()
+    return 0
+
+
+def run_tui(root: Path | None = None) -> int:
+    return asyncio.run(_run_session(root or Path.cwd()))

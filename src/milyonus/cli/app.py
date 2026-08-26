@@ -18,7 +18,8 @@ from milyonus.version import CODENAME
 app = typer.Typer(
     name="milyonus",
     help=f"{GLYPH} {PRODUCT} — remembers, verifies, evolves.",
-    no_args_is_help=True,
+    no_args_is_help=False,
+    invoke_without_command=True,
     add_completion=False,
 )
 console = Console()
@@ -36,6 +37,7 @@ def _version_callback(value: bool) -> None:
 
 @app.callback()
 def _main(
+    ctx: typer.Context,
     version: bool = typer.Option(
         False,
         "--version",
@@ -45,7 +47,13 @@ def _main(
         help="Sürümü göster ve çık.",
     ),
 ) -> None:
-    """Milyonus Agent command-line interface."""
+    """Milyonus Agent command-line interface. Argümansız çağrılırsa etkileşimli
+    oturum başlatır."""
+    # No subcommand -> start the interactive session (the default surface).
+    if ctx.invoked_subcommand is None:
+        from milyonus.cli.tui import run_tui
+
+        raise typer.Exit(code=run_tui())
 
 
 @app.command()
@@ -54,6 +62,14 @@ def doctor() -> None:
     from milyonus.cli.doctor import run_doctor
 
     raise typer.Exit(code=run_doctor())
+
+
+@app.command()
+def chat() -> None:
+    """Etkileşimli terminal oturumu başlat (argümansız `milyonus` ile aynı)."""
+    from milyonus.cli.tui import run_tui
+
+    raise typer.Exit(code=run_tui())
 
 
 def main() -> None:
