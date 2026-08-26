@@ -26,7 +26,8 @@ def _current_platform() -> str:
 class SkillEngine:
     def __init__(self, roots: list[Path] | None = None) -> None:
         # User skills first (take precedence), then bundled.
-        bundled = Path(__file__).resolve().parent.parent.parent.parent / "skills"
+        # Bundled skills ship inside the package so they survive `pip install`.
+        bundled = Path(__file__).resolve().parent.parent / "_bundled_skills"
         self.roots = roots or [skills_dir(), bundled]
         self._platform = _current_platform()
 

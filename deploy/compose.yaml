@@ -1,0 +1,24 @@
+# Milyonus Agent — hardened compose deployment.
+services:
+  milyonus:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: milyonus/agent
+    command: ["gateway", "start"]
+    env_file:
+      - ./milyonus.env         # holds ANTHROPIC_API_KEY, TELEGRAM_BOT_TOKEN, ...
+    volumes:
+      - milyonus-data:/data
+    # Hardening (PLAN §6 layer 3).
+    read_only: true            # read-only root filesystem
+    tmpfs:
+      - /tmp:size=64m,noexec,nosuid
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    restart: unless-stopped
+
+volumes:
+  milyonus-data:

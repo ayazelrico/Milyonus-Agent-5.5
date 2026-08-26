@@ -1,0 +1,24 @@
+site_name: Milyonus Agent
+site_description: An open-source, self-improving agent that remembers, verifies, and evolves.
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: cyan
+    - scheme: slate
+      primary: indigo
+      accent: cyan
+  features:
+    - navigation.sections
+    - content.code.copy
+nav:
+  - Home: index.md
+  - Benchmarks: benchmarks.md
+  - Comparison: comparison.md
+  - Production: production.md
+  - Architecture Decisions: adr/README.md
+markdown_extensions:
+  - admonition
+  - pymdownx.superfences
+  - tables

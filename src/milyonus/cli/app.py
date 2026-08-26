@@ -65,6 +65,14 @@ def doctor() -> None:
 
 
 @app.command()
+def setup() -> None:
+    """İlk kurulum sihirbazı: sağlayıcı ve anahtar."""
+    from milyonus.cli.setup import run_setup
+
+    raise typer.Exit(code=run_setup())
+
+
+@app.command()
 def chat() -> None:
     """Etkileşimli terminal oturumu başlat (argümansız `milyonus` ile aynı)."""
     from milyonus.cli.tui import run_tui

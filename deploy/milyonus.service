@@ -1,0 +1,23 @@
+# systemd unit for the Milyonus gateway on a VPS.
+# Place at /etc/systemd/system/milyonus.service and: systemctl enable --now milyonus
+[Unit]
+Description=Milyonus Agent gateway
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=milyonus
+Environment=MILYONUS_HOME=/home/milyonus/.milyonus
+ExecStart=/home/milyonus/.local/bin/milyonus gateway start
+Restart=on-failure
+RestartSec=5
+# Hardening.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/milyonus/.milyonus
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
