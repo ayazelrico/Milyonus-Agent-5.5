@@ -38,9 +38,9 @@ _OVERRIDE = re.compile(
 
 # Imperative / tool-triggering shapes inappropriate for an "observation".
 _IMPERATIVE = re.compile(
-    r"\b(run|execute|delete|remove|send|email|curl|wget|download|install|"
-    r"chmod|rm\s+-rf|drop\s+table)\b"
-    r"|\b(çalıştır|sil|kaldır|gönder|indir|kur)\b",
+    r"\b(run|execute|delete|remove|send|email|curl|wget|download|upload|"
+    r"install|forward|exfiltrate|chmod|rm\s+-rf|drop\s+table)\b"
+    r"|\b(çalıştır|sil|kaldır|gönder|indir|kur|yükle|yolla|ilet|aktar)\b",
     re.IGNORECASE,
 )
 
@@ -50,6 +50,18 @@ _CREDENTIAL = re.compile(
     r"|\bsk-[a-z0-9]{8,}|\bghp_[a-z0-9]{20,}|\bbearer\s+[a-z0-9._-]{16,}",
     re.IGNORECASE,
 )
+
+# Attempts to grant the agent authority or waive safeguards — the
+# "policy-compliant looking" injection that reads like a benign statement.
+_AUTHORITY = re.compile(
+    r"onay\s*(istemeden|almadan)|onaysız|izin\s*(istemeden|almadan|vermeden)"
+    r"|yetki\s*ver|kısıtlama.{0,15}(kaldır|yok say)"
+    r"|without\s+(approval|permission|asking)|bypass.{0,15}(approval|safeguard|check)"
+    r"|artık.{0,20}(yapmalı|çalıştırmalı|yüklemeli)"
+    r"|(agent|ajan|asistan).{0,25}(onaysız|yapmalı|çalıştırmalı|zorunda)",
+    re.IGNORECASE | re.DOTALL,
+)
+
 
 # Zero-width / bidi / invisible characters used to smuggle hidden instructions.
 _INVISIBLE = {
@@ -90,6 +102,10 @@ def scan(text: str) -> list[Finding]:
         findings.append(Finding("imperative", "medium", "gözlem için uygunsuz emir kipi/eylem"))
     if _CREDENTIAL.search(text):
         findings.append(Finding("credential", "high", "kimlik bilgisi/secret kalıbı"))
+    if _AUTHORITY.search(text):
+        findings.append(
+            Finding("authority_grant", "high", "yetki verme / koruma atlama kalıbı")
+        )
     inv = _has_invisible(text)
     if inv is not None:
         findings.append(Finding("invisible_unicode", "high", f"görünmez karakter: {inv}"))

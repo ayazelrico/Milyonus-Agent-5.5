@@ -42,7 +42,12 @@ def _source_competent(content: str, source_kind: SourceKind) -> bool:
     claims_user_pref = any(
         k in lowered for k in ("kullanıcı", "tercih", "prefers", "the user", "sever", "istiyor")
     )
-    return not (claims_user_pref and source_kind in ("third-party", "unknown", "subagent"))
+    # A third-party source also cannot dictate the agent's own behavior/policy.
+    claims_agent_policy = any(
+        k in lowered for k in ("agent", "ajan", "asistan", "politika", "policy", "onay")
+    )
+    untrusted = source_kind in ("third-party", "unknown", "subagent")
+    return not (untrusted and (claims_user_pref or claims_agent_policy))
 
 
 class RuleBasedVerifier:
