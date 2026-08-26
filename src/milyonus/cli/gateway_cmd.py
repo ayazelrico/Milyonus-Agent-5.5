@@ -18,8 +18,9 @@ console = Console()
 
 @gateway_app.command("start")
 def gateway_start(
-    channel: str = typer.Option("telegram", help="Başlatılacak kanal"),
+    channel: str = typer.Option("telegram", help="Başlatılacak kanal: telegram|whatsapp"),
     workspace: str = typer.Option(".", help="Agent çalışma kökü"),
+    port: int = typer.Option(8080, help="WhatsApp webhook portu"),
 ) -> None:
     """Mesajlaşma gateway'ini başlat."""
     import asyncio
@@ -39,6 +40,12 @@ def gateway_start(
         from milyonus.gateway.adapters.telegram import TelegramAdapter
 
         adapter = TelegramAdapter()
+        detail = "long-polling"
+    elif channel == "whatsapp":
+        from milyonus.gateway.adapters.whatsapp import WhatsAppCloudAdapter
+
+        adapter = WhatsAppCloudAdapter(port=port)
+        detail = f"Cloud API webhook :{port}"
     else:
         console.print(f"[{PALETTE['risk']}]Desteklenmeyen kanal: {channel}[/]")
         raise typer.Exit(code=1)
@@ -48,7 +55,7 @@ def gateway_start(
     server = GatewayServer(cfg, [adapter], workspace=Path(workspace).resolve())
     console.print(
         f"[bold {PALETTE['cyan_400']}]{GLYPH} Gateway[/] "
-        f"[dim]{channel} · varsayılan: reddet (pairing gerekli)[/]"
+        f"[dim]{channel} · {detail} · varsayılan: reddet (pairing gerekli)[/]"
     )
     try:
         asyncio.run(server.run())
