@@ -3,7 +3,20 @@ returns values."""
 
 import os
 
+import pytest
+
 from milyonus.config import env as envmod
+
+
+@pytest.fixture(autouse=True)
+def _restore_env():
+    """load_env mutates os.environ directly; snapshot and restore so
+    tests do not leak keys into each other."""
+    before = dict(os.environ)
+    yield
+    for k in set(os.environ) - set(before):
+        del os.environ[k]
+    os.environ.update(before)
 
 
 def test_parse_and_apply(tmp_path, monkeypatch):

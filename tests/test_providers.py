@@ -11,21 +11,21 @@ from milyonus.providers.openai_compat import OpenAICompatProvider
 
 ANTHROPIC_SSE = (
     'data: {"type":"message_start","message":{"usage":{"input_tokens":10}}}\n'
-    '\n'
+    "\n"
     'data: {"type":"content_block_start","index":0,'
     '"content_block":{"type":"text","text":""}}\n'
-    '\n'
+    "\n"
     'data: {"type":"content_block_delta","index":0,'
     '"delta":{"type":"text_delta","text":"Merhaba"}}\n'
-    '\n'
+    "\n"
     'data: {"type":"content_block_delta","index":0,'
     '"delta":{"type":"text_delta","text":" dünya"}}\n'
-    '\n'
+    "\n"
     'data: {"type":"content_block_stop","index":0}\n'
-    '\n'
+    "\n"
     'data: {"type":"message_delta","delta":{"stop_reason":"end_turn"},'
     '"usage":{"output_tokens":5}}\n'
-    '\n'
+    "\n"
 )
 
 ANTHROPIC_TOOL_SSE = (
@@ -46,7 +46,7 @@ OPENAI_SSE = (
     'data: {"choices":[{"delta":{"content":" dünya"},"finish_reason":null}]}\n\n'
     'data: {"choices":[{"delta":{},"finish_reason":"stop"}],'
     '"usage":{"prompt_tokens":10,"completion_tokens":5}}\n\n'
-    'data: [DONE]\n\n'
+    "data: [DONE]\n\n"
 )
 
 OPENAI_TOOL_SSE = (
@@ -134,9 +134,11 @@ def test_router_local_needs_no_key():
     assert p.name == "openai"
 
 
-def test_missing_key_errors():
+def test_missing_key_errors(monkeypatch):
     from milyonus.providers.base import ProviderError
 
+    # api_key="" falls back to the environment; ensure it is truly absent.
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     p = AnthropicProvider("m", api_key="")
     with pytest.raises(ProviderError):
         p._headers()
