@@ -29,12 +29,14 @@ from milyonus.memory.verifier import ModelVerifier, RuleBasedVerifier
 from milyonus.prompt.builder import build_system_prompt, skill_index_section
 from milyonus.providers.base import Message, ProviderError, ToolCall
 from milyonus.providers.router import build_provider
+from milyonus.security.risk import RiskEngine
 from milyonus.skills.engine import SkillEngine
 from milyonus.skills.manage import SkillManager
 from milyonus.skills.tool import make_skill_tools
 from milyonus.tools.fs.tools import make_fs_tools
 from milyonus.tools.registry import ToolRegistry
 from milyonus.tools.terminal.tools import make_shell_tool
+from milyonus.tools.web.tools import make_web_tools
 
 
 def _make_registry(root: Path, *extra_tool_groups: list) -> ToolRegistry:
@@ -42,6 +44,8 @@ def _make_registry(root: Path, *extra_tool_groups: list) -> ToolRegistry:
     for tool in make_fs_tools(root):
         reg.register(tool)
     reg.register(make_shell_tool(root))
+    for tool in make_web_tools():
+        reg.register(tool)
     for group in extra_tool_groups:
         for tool in group:
             reg.register(tool)
@@ -79,6 +83,7 @@ async def _run_session(root: Path) -> int:
     skill_tools = make_skill_tools(skill_engine, skill_manager)
 
     registry = _make_registry(root, memory_tools, skill_tools)
+    risk_engine = RiskEngine()
 
     # Frozen L1 snapshot injected once at session start (PLAN §4.6).
     snapshot = build_snapshot(mem_store, config=cfg.memory)
@@ -104,12 +109,30 @@ async def _run_session(root: Path) -> int:
         )
 
     async def approve(call: ToolCall, risk: str) -> bool:
-        color = PALETTE["risk"] if risk == "danger" else PALETTE["warn"]
+        # RiskEngine decides: auto-run reversible work, confirm the rest, block
+        # hard-dangerous patterns outright (PLAN §6.1).
+        decision, reason, findings = risk_engine.classify(call, risk)
+        for f in findings:
+            fc = PALETTE["risk"] if f.severity == "block" else PALETTE["warn"]
+            console.print(f"  [{fc}]• {f.signal}: {f.detail}[/]")
+        if decision == "auto":
+            return True
+        if decision == "block":
+            console.print(f"\n[{PALETTE['risk']}]✗ engellendi[/] {reason}")
+            return False
+        irreversible = risk_engine._is_irreversible(call)
+        color = PALETTE["risk"] if irreversible else PALETTE["warn"]
         console.print(
-            f"\n[{color}]⚠ onay gerekli[/] [bold]{call.name}[/] ({risk}) [dim]{call.arguments}[/]"
+            f"\n[{color}]⚠ onay gerekli[/] [bold]{call.name}[/] "
+            f"[dim]{call.arguments}[/]  ({reason})"
         )
-        ans = await asyncio.to_thread(input, "  izin ver? [e/H] ")
-        return ans.strip().lower() in ("e", "evet", "y", "yes")
+        # Irreversible actions cannot be granted 'always'; only y/N.
+        prompt = "  izin ver? [e/H] " if irreversible else "  izin ver? [e/H/oturum] "
+        ans = (await asyncio.to_thread(input, prompt)).strip().lower()
+        if ans in ("oturum", "o", "session", "s") and not irreversible:
+            risk_engine.grant_session(call, irreversible=False)
+            return True
+        return ans in ("e", "evet", "y", "yes")
 
     loop = AgentLoop(
         provider=provider,

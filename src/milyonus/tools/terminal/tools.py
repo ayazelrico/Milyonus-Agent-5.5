@@ -9,9 +9,11 @@ timeout and truncated so a runaway command cannot flood the context.
 from __future__ import annotations
 
 import asyncio
+import os
 from pathlib import Path
 from typing import Any
 
+from milyonus.security.redact import redact, safe_env
 from milyonus.tools.registry import Tool
 
 _MAX_OUTPUT = 100_000
@@ -28,13 +30,14 @@ def make_shell_tool(root: Path) -> Tool:
             cwd=str(root),
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
+            env=safe_env(dict(os.environ)),  # strip secrets from the child env
         )
         try:
             out, _ = await asyncio.wait_for(proc.communicate(), timeout=_TIMEOUT)
         except TimeoutError:
             proc.kill()
             return f"(zaman aşımı: {_TIMEOUT:.0f}s sonra öldürüldü)"
-        text = out.decode("utf-8", "replace")[:_MAX_OUTPUT]
+        text = redact(out.decode("utf-8", "replace")[:_MAX_OUTPUT])
         return f"[çıkış kodu {proc.returncode}]\n{text}"
 
     return Tool(
