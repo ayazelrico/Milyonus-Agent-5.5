@@ -1,0 +1,25 @@
+# Milyonus Agent — example configuration.
+# Copy to ~/.milyonus/config.toml and edit. Unknown keys are a startup error.
+
+[provider]
+name = "anthropic"              # anthropic | openai | local
+model = "claude-opus-4-8"
+verifier_model = "claude-haiku-4-5-20251001"
+# base_url = "https://openrouter.ai/api/v1"   # for openai-compatible endpoints
+max_output_tokens = 4096
+
+[memory]
+# direct_write is always false and cannot be enabled — the core guarantee.
+t3_confirmations_required = 2   # independent confirmations for third-party claims
+t3_ttl_days = 14                # unconfirmed third-party claims expire
+rephrase_similarity = 0.86      # negative-memory rephrase-detection threshold
+
+[security]
+sandbox_backend = "local"       # local | docker | ssh | modal | daytona
+gateway_allow_all_users = false # NEVER true in production
+# ssrf_protection is always true and cannot be disabled.
+website_blocklist = []
+env_passthrough = []
+
+[telemetry]
+enabled = false                 # opt-in, anonymous, off by default
