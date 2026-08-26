@@ -74,12 +74,14 @@ def chat() -> None:
 
 from milyonus.cli.gateway_cmd import gateway_app  # noqa: E402
 from milyonus.cli.memory_cmd import audit_app, memory_app  # noqa: E402
+from milyonus.cli.selfmod_cmd import selfmod_app  # noqa: E402
 from milyonus.cli.skills_cmd import skills_app  # noqa: E402
 
 app.add_typer(memory_app, name="memory")
 app.add_typer(audit_app, name="audit")
 app.add_typer(skills_app, name="skills")
 app.add_typer(gateway_app, name="gateway")
+app.add_typer(selfmod_app, name="selfmod")
 
 
 def main() -> None:

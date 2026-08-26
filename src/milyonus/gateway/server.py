@@ -13,6 +13,7 @@ The server is adapter-agnostic; it is handed one or more ChannelAdapters.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 
 from milyonus.config.schema import MilyonusConfig
@@ -36,6 +37,8 @@ from milyonus.tools.fs.tools import make_fs_tools
 from milyonus.tools.registry import ToolRegistry
 from milyonus.tools.terminal.tools import make_shell_tool
 from milyonus.tools.web.tools import make_web_tools
+
+_log = logging.getLogger("milyonus.gateway")
 
 
 @dataclass
@@ -118,6 +121,13 @@ class GatewayServer:
         )
 
     async def handle(self, adapter: ChannelAdapter, msg: InboundMessage) -> None:
+        _log.info(
+            "inbound %s:%s%s: %s",
+            msg.channel,
+            msg.user_id,
+            " (group)" if msg.is_group else "",
+            msg.text[:80],
+        )
         # Pairing flow works even before authorization.
         if msg.text.strip().lower().startswith("/pair"):
             await self._handle_pair(adapter, msg)
@@ -139,6 +149,7 @@ class GatewayServer:
             answer = await loop.run_turn(session.history)
         except ProviderError as exc:
             answer = f"Sağlayıcı hatası: {exc}"
+        _log.info("reply -> %s: %s", msg.user_id, (answer or "")[:80])
         await adapter.send(OutboundMessage(msg.user_id, answer or "(boş yanıt)"))
 
     async def _handle_pair(self, adapter: ChannelAdapter, msg: InboundMessage) -> None:
@@ -151,6 +162,7 @@ class GatewayServer:
             return
         self.pairing.mark_request(msg.channel, msg.user_id)
         ok, message = self.pairing.redeem(msg.channel, msg.user_id, parts[1])
+        _log.info("pair attempt %s:%s -> %s", msg.channel, msg.user_id, ok)
         await adapter.send(OutboundMessage(msg.user_id, message))
 
     async def run(self) -> None:

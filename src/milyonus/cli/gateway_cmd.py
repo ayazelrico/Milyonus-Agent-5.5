@@ -23,7 +23,11 @@ def gateway_start(
 ) -> None:
     """Mesajlaşma gateway'ini başlat."""
     import asyncio
+    import logging
 
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
+    )
     load_env()
     cfg = load_config()
     if cfg.security.gateway_allow_all_users:
