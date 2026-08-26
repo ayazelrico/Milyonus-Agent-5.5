@@ -15,6 +15,7 @@ theme:
 nav:
   - Home: index.md
   - Benchmarks: benchmarks.md
+  - Evaluation: evaluation.md
   - Comparison: comparison.md
   - WhatsApp: whatsapp.md
   - Editor (ACP): acp.md

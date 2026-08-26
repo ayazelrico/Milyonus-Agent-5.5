@@ -271,6 +271,7 @@ milyonus skills   list | view | why
 milyonus audit    verify | log
 milyonus gateway  start | pair
 milyonus selfmod  log | rollback
+milyonus eval     run | tasks    # task-level evaluation + cost/observability
 milyonus acp                 run as an editor agent (ACP)
 ```
 
@@ -312,6 +313,7 @@ Extend Milyonus through the **skill**, **tool**, or **channel adapter** interfac
 - [x] 6 surfaces (CLI, Telegram, WhatsApp, Slack, Discord, ACP)
 - [x] Self-modification harness · subagent delegation · MCP
 - [x] Hardened Docker · automated PyPI + Docker Hub release
+- [x] Task-level evaluation & observability (success, tools, tokens, cost)
 - [ ] Vector/embedding layer for memory similarity (opt-in)
 - [ ] Honcho-style cross-session user modelling
 - [ ] Larger PoisonBench corpus + third-party audit

@@ -55,10 +55,15 @@ class AgentLoop:
     on_text: TextSink = _noop_text
     on_tool: ToolSink = _noop_tool
     max_output_tokens: int = 4096
+    # Optional observability. When set, the loop records model/tool events for
+    # evaluation. Passive and off by default — existing behavior is unchanged.
+    tracer: object | None = None
 
     async def run_turn(self, history: list[Message]) -> str:
         """Advance the conversation until a final assistant message. `history`
         is mutated in place with the new assistant/tool messages."""
+        import time as _time
+
         while True:
             if self.budget.exhausted():
                 note = "(bütçe tükendi — görev burada durduruldu)"
@@ -72,8 +77,12 @@ class AgentLoop:
                 max_output_tokens=self.max_output_tokens,
             )
 
+            if self.tracer is not None:
+                self.tracer.start_model_call()
             text_parts: list[str] = []
             pending: list[ToolCall] = []
+            usage_in = usage_out = 0
+            stop_reason: str | None = None
             async for event in self.provider.stream(request):
                 if event.kind == "text":
                     text_parts.append(event.delta)
@@ -82,10 +91,14 @@ class AgentLoop:
                     pending.append(event.tool_call)
                     await self.on_tool(event.tool_call)
                 elif event.kind == "usage" and event.usage is not None:
-                    self.budget.record(
-                        input_tokens=event.usage.input_tokens,
-                        output_tokens=event.usage.output_tokens,
-                    )
+                    usage_in, usage_out = event.usage.input_tokens, event.usage.output_tokens
+                    self.budget.record(input_tokens=usage_in, output_tokens=usage_out)
+                elif event.kind == "done":
+                    stop_reason = event.stop_reason
+            if self.tracer is not None:
+                self.tracer.end_model_call(
+                    input_tokens=usage_in, output_tokens=usage_out, stop_reason=stop_reason
+                )
 
             assistant_text = "".join(text_parts)
             history.append(
@@ -104,9 +117,18 @@ class AgentLoop:
             for call in pending:
                 tool = self.tools.get(call.name)
                 risk = tool.risk if tool else "danger"
+                approved: bool | None = None
                 if risk != "safe":
-                    ok = await self.approve(call, risk)
-                    if not ok:
+                    approved = await self.approve(call, risk)
+                    if not approved:
+                        if self.tracer is not None:
+                            self.tracer.record_tool_call(
+                                name=call.name,
+                                arguments=call.arguments,
+                                is_error=True,
+                                duration_s=0.0,
+                                approved=False,
+                            )
                         results.append(
                             ToolResult(
                                 call_id=call.id,
@@ -115,7 +137,16 @@ class AgentLoop:
                             )
                         )
                         continue
+                t0 = _time.perf_counter()
                 content, is_error = await self.tools.run(call.name, call.arguments)
+                if self.tracer is not None:
+                    self.tracer.record_tool_call(
+                        name=call.name,
+                        arguments=call.arguments,
+                        is_error=is_error,
+                        duration_s=_time.perf_counter() - t0,
+                        approved=approved,
+                    )
                 results.append(ToolResult(call_id=call.id, content=content, is_error=is_error))
             history.append(Message(role="tool", tool_results=results))
             # loop continues: model sees tool results and responds
