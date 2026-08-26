@@ -71,6 +71,19 @@ def setup() -> None:
 
 
 @app.command()
+def acp() -> None:
+    """ACP sunucusu olarak çalış (editör entegrasyonu, stdio/JSON-RPC)."""
+    import asyncio
+
+    from milyonus.acp.server import run_stdio
+    from milyonus.config.env import load_env
+    from milyonus.config.loader import load_config
+
+    load_env()
+    asyncio.run(run_stdio(load_config()))
+
+
+@app.command()
 def chat() -> None:
     """Etkileşimli terminal oturumu başlat (argümansız `milyonus` ile aynı)."""
     from milyonus.cli.tui import run_tui
