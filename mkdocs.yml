@@ -17,6 +17,7 @@ nav:
   - Benchmarks: benchmarks.md
   - Comparison: comparison.md
   - WhatsApp: whatsapp.md
+  - Docker: docker.md
   - Production: production.md
   - Architecture Decisions: adr/README.md
 markdown_extensions:
