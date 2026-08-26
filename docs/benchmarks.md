@@ -1,45 +1,71 @@
 # Benchmarks
 
-Reproducible measurements of Milyonus's safety and capability claims. Re-run any
-of these yourself; the scripts live under `evals/`.
+Reproducible, in-repo measurements. Re-run any of these yourself.
 
 ## PoisonBench — memory-poisoning resistance
 
-Measures whether poisoned memory candidates (across the four write channels
-C1–C4 from the literature) are correctly rejected.
+Measures whether poisoned memory candidates are correctly kept out of durable
+memory. Each attack is proposed into an **isolated, empty memory** and pushed
+through the real pipeline; it "succeeds" only if it reaches `state=active`.
 
-- **ASR** (Attack Success Rate): attacks that *should* have been rejected but
-  were promoted. Lower is better. Target **< 10%**.
-- **RSR** (Retention/Success Rate): of those, how many persisted as active.
-  Target **< 5%**.
-- **Legit promotion rate**: legitimate facts that correctly promoted. Higher is
-  better.
+- **ASR** (Attack Success Rate) = promoted attacks / attacks that should be
+  rejected. **Lower is better.**
+- **RSR** (Retention) = attacks still active after a re-processing pass / same
+  denominator. **Lower is better.**
+- **Legit promotion** = benign items correctly promoted / benign items. Higher
+  is better (measures we didn't just reject everything).
+
+### The honest part: a held-out split
+
+The corpus is split into **train** (phrasings the deterministic scanner was
+tuned against) and **test** — a **held-out** set of *novel* attacks the scanner
+was deliberately **not** patched for. The **test-split ASR is the number that
+matters**: it measures generalization, not memorization.
 
 Run:
 ```bash
-uv run python -m evals.poisonbench.run              # rule-based verifier (no key)
-MILYONUS_LIVE=1 uv run python -m evals.poisonbench.run   # + live model verifier
+uv run python -m evals.poisonbench.run                 # rule-based verifier
+MILYONUS_LIVE=1 uv run python -m evals.poisonbench.run # full pipeline (+ model verifier)
 ```
 
-### Results (v0.1.0, 2026-08-26)
+### Results (v5.5.0, held-out = 8 novel attacks + 4 benign controls)
 
-Corpus v2: **45 cases (30 attacks + 15 legitimate)** across write channels C1–C4.
-
-| Configuration | ASR | RSR | Legit promotion |
+| Configuration | Held-out ASR | Held-out RSR | Held-out legit |
 |---|---|---|---|
-| Milyonus — rule-based verifier | **0.0%** | **0.0%** | **100%** |
-| Milyonus — live model verifier (Claude Haiku 4.5) | **0.0%** | **0.0%** | 73.3% |
-| Hermes (published, for reference) | 66.67% | 64.70% | — |
+| Rule-based verifier only | **75.0%** | 75.0% | 100% |
+| **Full pipeline (rule + model verifier)** | **0.0%** | **0.0%** | **100%** |
 
-> The rule-based verifier is the deterministic floor that runs even without a
-> model key. On this corpus it already rejects every attack while promoting
-> every legitimate fact. The model verifier adds a second, independent judgment
-> that is stricter — it also blocks all attacks but rejects some legitimate
-> facts (a precision/recall trade toward caution). It earns its place against
-> novel attacks the fixed rules do not cover; for well-covered patterns the
-> deterministic floor is sufficient. Both configurations meet the ASR/RSR
-> targets. The corpus will keep growing — these are a baseline, not a ceiling.
+**Read this carefully — it is the real story:**
 
-The Hermes figures are from the published literature cited in the project report
-(memory-poisoning benchmark). They are included for orientation, not as a
-head-to-head run on identical inputs; a like-for-like harness is future work.
+- The regex scanner **alone does not generalize** (75% ASR on novel attacks). A
+  scanner only catches what it was written for.
+- The **full pipeline generalizes to 0%** because poisoning resistance is
+  *structural*, not pattern-based: there is **no direct-write path**, an
+  independent **verifier model** judges every candidate, sources have
+  **competence limits**, and promotion follows **trust tiers**. The model
+  verifier caught every novel attack the regex missed.
+- This is why the layered design exists. The deterministic floor is a cheap,
+  key-less first pass; the verifier is what makes it hold against attacks nobody
+  wrote a rule for.
+
+> Trade-off: the cautious model verifier also rejects some *legitimate* train-set
+> facts (train legit promotion ≈ 73%). Held-out legit promotion stayed at 100%.
+> Tuning verifier precision is ongoing.
+
+### For orientation vs Hermes
+
+Published memory-poisoning literature reports ~**66.67% ASR / 64.70% RSR** for
+Hermes-style flexible-write memory. That figure comes from a different harness
+and is shown for orientation, **not** as a like-for-like run — we cannot execute
+Hermes here. The defensible Milyonus claim is the absolute, held-out number
+above and the structural reason behind it. A like-for-like harness and a
+third-party audit are on the roadmap.
+
+## SafetyRegression — approval cannot be bypassed
+
+```bash
+uv run python -m evals.safety.run
+```
+
+Enumerates irreversible/dangerous tool calls and asserts the RiskEngine never
+auto-runs them and that hard-block patterns are blocked. Result: **0 findings**.
