@@ -15,7 +15,8 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.patch_stdout import patch_stdout
 from rich.console import Console
 
-from milyonus.brand import GLYPH, PALETTE, PRODUCT, PROMPT
+from milyonus.brand import GLYPH, PALETTE, PROMPT
+from milyonus.cli.splash import render_splash
 from milyonus.config.env import load_env
 from milyonus.config.loader import load_config
 from milyonus.core.budget import Budget
@@ -103,11 +104,12 @@ async def _run_session(root: Path) -> int:
     system = build_system_prompt(memory=snapshot, extra_sections=extra or None)
     budget = Budget(max_iterations=50, max_tokens=cfg.provider.max_output_tokens * 200)
 
-    console.print(
-        f"[bold {PALETTE['cyan_400']}]{GLYPH} {PRODUCT}[/] "
-        f"[dim]{provider.name}:{provider.model} · oturum {sid}[/]"
+    render_splash(
+        console,
+        model=f"{provider.name}:{provider.model}",
+        session=sid,
+        workspace=str(root),
     )
-    console.print(f"[dim]Çıkış için Ctrl+D. Çalışma kökü: {root}[/]\n")
 
     async def on_text(chunk: str) -> None:
         console.print(chunk, end="", markup=False, highlight=False)
