@@ -1,8 +1,6 @@
 <div align="center">
 
-<img src="assets/brand/milyonus-mark.png" width="160" alt="Milyonus mark"/>
-
-<img src="assets/brand/milyonus-wordmark.png" width="460" alt="Milyonus"/>
+<img src="assets/brand/milyonus-wordmark.png" width="560" alt="Milyonus"/>
 
 ### ✦ Agent 5.5 — *Remembers. Verifies. Evolves.*
 
