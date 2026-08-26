@@ -21,6 +21,11 @@ from milyonus.config.loader import load_config
 from milyonus.core.budget import Budget
 from milyonus.core.loop import AgentLoop
 from milyonus.core.store import SessionStore
+from milyonus.memory.pipeline import MemoryPipeline
+from milyonus.memory.render import build_snapshot
+from milyonus.memory.store import MemoryStore
+from milyonus.memory.tool import make_memory_tools
+from milyonus.memory.verifier import ModelVerifier, RuleBasedVerifier
 from milyonus.prompt.builder import build_system_prompt
 from milyonus.providers.base import Message, ProviderError, ToolCall
 from milyonus.providers.router import build_provider
@@ -29,11 +34,13 @@ from milyonus.tools.registry import ToolRegistry
 from milyonus.tools.terminal.tools import make_shell_tool
 
 
-def _make_registry(root: Path) -> ToolRegistry:
+def _make_registry(root: Path, memory_tools: list) -> ToolRegistry:
     reg = ToolRegistry()
     for tool in make_fs_tools(root):
         reg.register(tool)
     reg.register(make_shell_tool(root))
+    for tool in memory_tools:
+        reg.register(tool)
     return reg
 
 
@@ -47,10 +54,25 @@ async def _run_session(root: Path) -> int:
         return 1
 
     provider = build_provider(cfg.provider)
-    registry = _make_registry(root)
-    system = build_system_prompt()
+
+    # Verified-memory wiring: a separate cheap verifier model gates promotion.
+    mem_store = MemoryStore()
+    try:
+        verifier_provider = build_provider(cfg.provider, model=cfg.provider.verifier_model)
+        verifier = ModelVerifier(verifier_provider, fallback=RuleBasedVerifier())
+    except Exception:
+        verifier = RuleBasedVerifier()
+    pipeline = MemoryPipeline(mem_store, config=cfg.memory, verifier=verifier)
+
     store = SessionStore()
     sid = store.create_session("cli", user_ref="local")
+
+    memory_tools = make_memory_tools(pipeline, session_id=sid, user_ref="local")
+    registry = _make_registry(root, memory_tools)
+
+    # Frozen L1 snapshot injected once at session start (PLAN §4.6).
+    snapshot = build_snapshot(mem_store, config=cfg.memory)
+    system = build_system_prompt(memory=snapshot)
     budget = Budget(max_iterations=50, max_tokens=cfg.provider.max_output_tokens * 200)
 
     console.print(
@@ -119,6 +141,7 @@ async def _run_session(root: Path) -> int:
         console.print()  # newline after streamed answer
 
     store.close()
+    mem_store.close()
     return 0
 
 
