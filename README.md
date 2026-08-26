@@ -61,14 +61,14 @@ milyonus gateway pair telegram                       # get a pairing code
 milyonus gateway start                               # default-deny; /pair <code> in chat
 ```
 
-WhatsApp, Discord, and Slack adapters share the same gateway core.
+WhatsApp, Slack, and Discord adapters share the same gateway core.
 
 ## What's inside
 
 - **Verified memory** — trust tiers T0–T4, a separate verifier model, hash-chained
   audit ledger, cascade revocation. `milyonus memory why <id>` shows the full chain.
-- **Skills** — the agent writes its own reusable skills, gated by a
-  reproducibility check + security scanner before they go live.
+- **Skills** — 26 official skills bundled in; the agent also writes its own,
+  gated by a reproducibility check + security scanner before they go live.
 - **Security** — risk-tiered approval, always-on SSRF, credential redaction,
   pre-exec command scanning, DM pairing with lockout.
 - **Self-modification** — the agent can edit its own code, behind an automatic
@@ -90,7 +90,7 @@ milyonus selfmod log|rollback
 ## Deploy
 
 ```bash
-docker run --rm -it -v milyonus:/data milyonus/agent   # hardened image
+docker run --rm -it -v milyonus-data:/data milyonus/agent:5.5.0 doctor
 ```
 
 See [docs/production.md](docs/production.md) for the production checklist.
@@ -99,7 +99,7 @@ See [docs/production.md](docs/production.md) for the production checklist.
 
 ```bash
 uv sync --extra dev
-uv run pytest -q            # 114 tests, green without an API key
+uv run pytest -q            # 145 tests, green without an API key
 uv run python -m evals.poisonbench.run   # safety benchmark
 ```
 
