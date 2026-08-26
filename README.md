@@ -163,12 +163,14 @@ The agent loads on-demand instruction docs (agentskills.io-compatible) and
 **verified, not trusted on write**: it must pass a reproducibility gate + security
 scanner before it goes live.
 
-**26 official skills ship bundled** — ready on first install:
+**36 official skills ship bundled** — ready on first install:
 
 ```
 git · github-cli · docker · docker-compose · kubernetes · pytest · uv · ripgrep
 jq · sqlite · postgres · pandas · csv · ffmpeg · imagemagick · tar · ssh · cron
 systemd · curl · bash · regex · markdown · env-secrets · web-scraping · pdf
+github-actions · terraform · aws-cli · fastapi · playwright · security-audit
+rag-retrieval · prompt-engineering · debugging · observability
 ```
 
 ```bash
