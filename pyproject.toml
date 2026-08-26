@@ -28,6 +28,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+discord = ["websockets>=12.0"]
 anthropic = ["anthropic>=0.34"]
 openai = ["openai>=1.40"]
 vec = ["sqlite-vec>=0.1.1"]

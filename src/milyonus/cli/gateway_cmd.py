@@ -18,7 +18,9 @@ console = Console()
 
 @gateway_app.command("start")
 def gateway_start(
-    channel: str = typer.Option("telegram", help="Başlatılacak kanal: telegram|whatsapp"),
+    channel: str = typer.Option(
+        "telegram", help="Başlatılacak kanal: telegram|whatsapp|slack|discord"
+    ),
     workspace: str = typer.Option(".", help="Agent çalışma kökü"),
     port: int = typer.Option(8080, help="WhatsApp webhook portu"),
 ) -> None:
@@ -46,6 +48,16 @@ def gateway_start(
 
         adapter = WhatsAppCloudAdapter(port=port)
         detail = f"Cloud API webhook :{port}"
+    elif channel == "slack":
+        from milyonus.gateway.adapters.slack import SlackAdapter
+
+        adapter = SlackAdapter(port=port)
+        detail = f"Events API webhook :{port}"
+    elif channel == "discord":
+        from milyonus.gateway.adapters.discord import DiscordAdapter
+
+        adapter = DiscordAdapter()
+        detail = "Gateway WebSocket"
     else:
         console.print(f"[{PALETTE['risk']}]Desteklenmeyen kanal: {channel}[/]")
         raise typer.Exit(code=1)
