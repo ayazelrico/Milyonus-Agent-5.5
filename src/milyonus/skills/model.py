@@ -65,11 +65,9 @@ def parse_skill_md(text: str, path: Path) -> Skill:
     raw, body = _split_frontmatter(text)
     if "name" not in raw or "description" not in raw:
         raise SkillParseError("frontmatter 'name' ve 'description' içermeli")
-    ns = (
-        (raw.get("metadata") or {}).get("milyonus", {})
-        if isinstance(raw.get("metadata"), dict)
-        else {}
-    )
+    meta_block = raw.get("metadata") if isinstance(raw.get("metadata"), dict) else {}
+    # Branded namespace is "milyonusagentskill"; "milyonus" is read as a fallback.
+    ns = meta_block.get("milyonusagentskill") or meta_block.get("milyonus") or {}
     meta = SkillMeta(
         name=str(raw["name"]),
         description=str(raw["description"]),
@@ -105,6 +103,6 @@ def render_skill_md(meta: SkillMeta, body: str) -> str:
         ns["fallback_for_toolsets"] = meta.fallback_for_toolsets
     if meta.required_environment_variables:
         ns["required_environment_variables"] = meta.required_environment_variables
-    fm["metadata"] = {"milyonus": ns}
+    fm["metadata"] = {"milyonusagentskill": ns}
     front = yaml.safe_dump(fm, sort_keys=False, allow_unicode=True).strip()
     return f"---\n{front}\n---\n\n{body.strip()}\n"

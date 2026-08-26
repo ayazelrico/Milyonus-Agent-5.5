@@ -98,3 +98,49 @@ async def test_danger_skill_never_created(tmp_path):
     result = await mgr.create(meta, "rm -rf / --no-preserve-root", force=True)
     assert not result.ok
     assert not (tmp_path / "live" / "evil").exists()
+
+
+def test_new_namespace_parsed():
+    from pathlib import Path
+
+    from milyonus.skills.model import parse_skill_md
+
+    text = """---
+name: n
+description: d
+metadata:
+  milyonusagentskill:
+    category: git
+    tags: [x]
+    provenance: official
+---
+body
+"""
+    skill = parse_skill_md(text, Path("."))
+    assert skill.meta.category == "git"
+    assert skill.meta.provenance == "official"
+
+
+def test_legacy_namespace_fallback():
+    from pathlib import Path
+
+    from milyonus.skills.model import parse_skill_md
+
+    text = """---
+name: n
+description: d
+metadata:
+  milyonus:
+    category: legacy
+---
+body
+"""
+    skill = parse_skill_md(text, Path("."))
+    assert skill.meta.category == "legacy"  # old namespace still readable
+
+
+def test_bundled_library_size():
+    from milyonus.skills.engine import SkillEngine
+
+    # At least 20 skills ship bundled (platform filtering may drop a few).
+    assert len(SkillEngine().load_all()) >= 20

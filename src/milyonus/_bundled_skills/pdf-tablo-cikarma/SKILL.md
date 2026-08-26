@@ -4,7 +4,7 @@ description: PDF dosyalarından tabloları çıkarır ve CSV'ye çevirir
 version: 1.0.0
 platforms: [macos, linux]
 metadata:
-  milyonus:
+  milyonusagentskill:
     tags: [pdf, veri]
     category: veri-isleme
     requires_toolsets: [terminal]
