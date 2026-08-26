@@ -332,4 +332,15 @@ assets in `assets/brand/`.
 <img src="assets/brand/milyonus-mark.png" width="80" alt="Milyonus"/>
 <br>
 <em>Remembers. Verifies. Evolves.</em>
+
+<em>Ayaz Elrico | Milyonus INC </em>
+<em>ayaz@milyonus.com </em>
+ 
 </div>
+
+
+
+
+
+
+
