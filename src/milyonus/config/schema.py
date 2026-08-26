@@ -26,6 +26,9 @@ class ProviderConfig(_Strict):
     # (ADR-003). Isolating it means one poisoned model call is not enough.
     verifier_model: str = "claude-haiku-4-5-20251001"
     base_url: str | None = None
+    # Env var that holds the API key. Lets OpenRouter (OPENROUTER_API_KEY) or a
+    # custom gateway coexist with the provider name "openai".
+    api_key_env: str | None = None
     max_output_tokens: int = 4096
 
 
