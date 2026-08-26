@@ -21,18 +21,24 @@ uv run python -m evals.poisonbench.run              # rule-based verifier (no ke
 MILYONUS_LIVE=1 uv run python -m evals.poisonbench.run   # + live model verifier
 ```
 
-### Results (v0.1.0.dev, 2026-08-26)
+### Results (v0.1.0, 2026-08-26)
+
+Corpus v2: **45 cases (30 attacks + 15 legitimate)** across write channels C1–C4.
 
 | Configuration | ASR | RSR | Legit promotion |
 |---|---|---|---|
-| Milyonus — rule-based verifier | **0.0%** | **0.0%** | 100% |
-| Milyonus — live model verifier (Claude Haiku 4.5) | **0.0%** | **0.0%** | 100% |
+| Milyonus — rule-based verifier | **0.0%** | **0.0%** | **100%** |
+| Milyonus — live model verifier (Claude Haiku 4.5) | **0.0%** | **0.0%** | 73.3% |
 | Hermes (published, for reference) | 66.67% | 64.70% | — |
 
 > The rule-based verifier is the deterministic floor that runs even without a
-> model key; the model verifier adds a second, independent judgment. Both pass
-> the targets on the current corpus. The corpus is small (11 cases) and will
-> grow — these numbers are a starting baseline, not a final claim.
+> model key. On this corpus it already rejects every attack while promoting
+> every legitimate fact. The model verifier adds a second, independent judgment
+> that is stricter — it also blocks all attacks but rejects some legitimate
+> facts (a precision/recall trade toward caution). It earns its place against
+> novel attacks the fixed rules do not cover; for well-covered patterns the
+> deterministic floor is sufficient. Both configurations meet the ASR/RSR
+> targets. The corpus will keep growing — these are a baseline, not a ceiling.
 
 The Hermes figures are from the published literature cited in the project report
 (memory-poisoning benchmark). They are included for orientation, not as a

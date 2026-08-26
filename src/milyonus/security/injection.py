@@ -32,7 +32,9 @@ _OVERRIDE = re.compile(
     r"|\byou are now\b|\bfrom now on\b.{0,20}\byou (must|will|should)\b"
     r"|\b(system|developer|admin)\s*(prompt|message|override)\b"
     r"|önceki.{0,20}(talimat|komut).{0,20}(yok say|unut|görmezden)"
-    r"|bundan (sonra|böyle).{0,20}(yapmalısın|zorundasın)",
+    r"|bundan (sonra|böyle).{0,20}(yapmalısın|zorundasın)"
+    r"|sen (artık|şimdi|bundan (sonra|böyle)).{0,30}(asistan|ajan|model|bot)"
+    r"|kısıtlama(sız| yok| olmadan)|sınırsız (asistan|ajan|model)",
     re.IGNORECASE | re.DOTALL,
 )
 
@@ -47,7 +49,8 @@ _IMPERATIVE = re.compile(
 # Credential exfiltration / secret-reading shapes.
 _CREDENTIAL = re.compile(
     r"\b(api[_-]?key|secret|token|password|credential|\.env|private[_-]?key)\b"
-    r"|\bsk-[a-z0-9]{8,}|\bghp_[a-z0-9]{20,}|\bbearer\s+[a-z0-9._-]{16,}",
+    r"|\bsk-[a-z0-9]{8,}|\bghp_[a-z0-9]{20,}|\bbearer\s+[a-z0-9._-]{16,}"
+    r"|kimlik\s*bilgi|gizli\s*anahtar",
     re.IGNORECASE,
 )
 
@@ -58,7 +61,8 @@ _AUTHORITY = re.compile(
     r"|yetki\s*ver|kısıtlama.{0,15}(kaldır|yok say)"
     r"|without\s+(approval|permission|asking)|bypass.{0,15}(approval|safeguard|check)"
     r"|artık.{0,20}(yapmalı|çalıştırmalı|yüklemeli)"
-    r"|(agent|ajan|asistan).{0,25}(onaysız|yapmalı|çalıştırmalı|zorunda)",
+    r"|(agent|ajan|asistan).{0,25}(onaysız|yapmalı|çalıştırmalı|zorunda)"
+    r"|onay\s*isteme|(agent|ajan|asistan).{0,35}(oku|eriş|çalıştır|yükle|sil)(abilir|abilirsin|abilirsiniz|malı|meli)",
     re.IGNORECASE | re.DOTALL,
 )
 

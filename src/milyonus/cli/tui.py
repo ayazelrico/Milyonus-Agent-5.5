@@ -29,6 +29,7 @@ from milyonus.memory.verifier import ModelVerifier, RuleBasedVerifier
 from milyonus.prompt.builder import build_system_prompt, skill_index_section
 from milyonus.providers.base import Message, ProviderError, ToolCall
 from milyonus.providers.router import build_provider
+from milyonus.security.context_files import safe_context_sections
 from milyonus.security.risk import RiskEngine
 from milyonus.skills.engine import SkillEngine
 from milyonus.skills.manage import SkillManager
@@ -88,10 +89,18 @@ async def _run_session(root: Path) -> int:
     # Frozen L1 snapshot injected once at session start (PLAN §4.6).
     snapshot = build_snapshot(mem_store, config=cfg.memory)
     skills_section = skill_index_section(skill_engine.list_level0())
-    system = build_system_prompt(
-        memory=snapshot,
-        extra_sections=[skills_section] if skills_section else None,
-    )
+
+    # Scan repo context files (AGENTS.md, .cursorrules, …); inject only clean
+    # ones, and warn about any dropped as poisoned (PLAN §6 layer 5).
+    ctx_sections, ctx_results = safe_context_sections(root)
+    for r in ctx_results:
+        if not r.included:
+            console.print(
+                f"[{PALETTE['risk']}]⚠ bağlam dosyası atlandı (injection):[/] {r.path.name}"
+            )
+
+    extra = [s for s in ([skills_section] + ctx_sections) if s]
+    system = build_system_prompt(memory=snapshot, extra_sections=extra or None)
     budget = Budget(max_iterations=50, max_tokens=cfg.provider.max_output_tokens * 200)
 
     console.print(
