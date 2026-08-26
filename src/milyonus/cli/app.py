@@ -73,9 +73,11 @@ def chat() -> None:
 
 
 from milyonus.cli.memory_cmd import audit_app, memory_app  # noqa: E402
+from milyonus.cli.skills_cmd import skills_app  # noqa: E402
 
 app.add_typer(memory_app, name="memory")
 app.add_typer(audit_app, name="audit")
+app.add_typer(skills_app, name="skills")
 
 
 def main() -> None:

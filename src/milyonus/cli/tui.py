@@ -26,21 +26,25 @@ from milyonus.memory.render import build_snapshot
 from milyonus.memory.store import MemoryStore
 from milyonus.memory.tool import make_memory_tools
 from milyonus.memory.verifier import ModelVerifier, RuleBasedVerifier
-from milyonus.prompt.builder import build_system_prompt
+from milyonus.prompt.builder import build_system_prompt, skill_index_section
 from milyonus.providers.base import Message, ProviderError, ToolCall
 from milyonus.providers.router import build_provider
+from milyonus.skills.engine import SkillEngine
+from milyonus.skills.manage import SkillManager
+from milyonus.skills.tool import make_skill_tools
 from milyonus.tools.fs.tools import make_fs_tools
 from milyonus.tools.registry import ToolRegistry
 from milyonus.tools.terminal.tools import make_shell_tool
 
 
-def _make_registry(root: Path, memory_tools: list) -> ToolRegistry:
+def _make_registry(root: Path, *extra_tool_groups: list) -> ToolRegistry:
     reg = ToolRegistry()
     for tool in make_fs_tools(root):
         reg.register(tool)
     reg.register(make_shell_tool(root))
-    for tool in memory_tools:
-        reg.register(tool)
+    for group in extra_tool_groups:
+        for tool in group:
+            reg.register(tool)
     return reg
 
 
@@ -68,11 +72,21 @@ async def _run_session(root: Path) -> int:
     sid = store.create_session("cli", user_ref="local")
 
     memory_tools = make_memory_tools(pipeline, session_id=sid, user_ref="local")
-    registry = _make_registry(root, memory_tools)
+
+    # Skill engine + self-management (procedural memory, PLAN §5).
+    skill_engine = SkillEngine()
+    skill_manager = SkillManager()
+    skill_tools = make_skill_tools(skill_engine, skill_manager)
+
+    registry = _make_registry(root, memory_tools, skill_tools)
 
     # Frozen L1 snapshot injected once at session start (PLAN §4.6).
     snapshot = build_snapshot(mem_store, config=cfg.memory)
-    system = build_system_prompt(memory=snapshot)
+    skills_section = skill_index_section(skill_engine.list_level0())
+    system = build_system_prompt(
+        memory=snapshot,
+        extra_sections=[skills_section] if skills_section else None,
+    )
     budget = Budget(max_iterations=50, max_tokens=cfg.provider.max_output_tokens * 200)
 
     console.print(

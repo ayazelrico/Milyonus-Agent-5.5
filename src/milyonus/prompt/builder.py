@@ -64,3 +64,14 @@ def build_system_prompt(
     if extra_sections:
         sections.extend(s for s in extra_sections if s.strip())
     return "\n\n".join(sections)
+
+
+def skill_index_section(skills: list[dict[str, str]]) -> str:
+    """Render a compact skill index (level 0) for the system prompt. Lists what
+    is available so the model knows it can `skill_view` for details."""
+    if not skills:
+        return ""
+    lines = ["# Available skills (use skill_view to load one)"]
+    for s in skills:
+        lines.append(f"- {s['name']} ({s.get('category', 'general')}): {s['description']}")
+    return "\n".join(lines)

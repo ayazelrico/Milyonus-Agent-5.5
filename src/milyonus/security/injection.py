@@ -103,9 +103,7 @@ def scan(text: str) -> list[Finding]:
     if _CREDENTIAL.search(text):
         findings.append(Finding("credential", "high", "kimlik bilgisi/secret kalıbı"))
     if _AUTHORITY.search(text):
-        findings.append(
-            Finding("authority_grant", "high", "yetki verme / koruma atlama kalıbı")
-        )
+        findings.append(Finding("authority_grant", "high", "yetki verme / koruma atlama kalıbı"))
     inv = _has_invisible(text)
     if inv is not None:
         findings.append(Finding("invisible_unicode", "high", f"görünmez karakter: {inv}"))
