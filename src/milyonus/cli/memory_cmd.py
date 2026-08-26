@@ -174,3 +174,25 @@ def audit_log(limit: int = 30) -> None:
     for e in reversed(entries):
         table.add_row(str(e["seq"]), e["action"], e["item_id"] or "-", e["entry_hash"][:12])
     console.print(table)
+
+
+@memory_app.command("consolidate")
+def memory_consolidate() -> None:
+    """Gece konsolidasyonu: bekleyenleri işle, süresi dolanları düşür,
+    yinelenenleri birleştir, çelişkileri işaretle."""
+    import asyncio
+
+    from milyonus.config.env import load_env
+    from milyonus.config.loader import load_config
+    from milyonus.memory.consolidate import consolidate
+    from milyonus.memory.pipeline import MemoryPipeline
+
+    load_env()
+    cfg = load_config()
+    store = MemoryStore()
+    pipeline = MemoryPipeline(store, config=cfg.memory)
+    report = asyncio.run(consolidate(pipeline))
+    console.print(f"[bold {PALETTE['cyan_400']}]{GLYPH} Konsolidasyon[/]")
+    console.print(f"  {report.summary()}")
+    for a, b in report.contradictions:
+        console.print(f"  [{PALETTE['warn']}]çelişki:[/] {a} <-> {b}")
