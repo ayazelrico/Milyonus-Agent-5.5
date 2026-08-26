@@ -19,8 +19,9 @@ from rich.table import Table
 
 from milyonus import __version__
 from milyonus.brand import GLYPH, PALETTE
+from milyonus.config.env import env_file_is_private, load_env
 from milyonus.config.loader import ConfigError, load_config
-from milyonus.config.paths import config_file, ensure_layout
+from milyonus.config.paths import config_file, ensure_layout, env_file
 
 
 @dataclass
@@ -56,6 +57,19 @@ def _config_check() -> Check:
         return Check("Yapılandırma", False, first)
 
 
+def _env_check() -> Check:
+    private = env_file_is_private()
+    if private is None:
+        return Check("Secret dosyası", True, f"{env_file()} yok (opsiyonel)")
+    if not private:
+        return Check(
+            "Secret dosyası",
+            False,
+            f"{env_file()} çok açık — `chmod 600` çalıştırın",
+        )
+    return Check("Secret dosyası", True, f"{env_file()} (mod 0600)")
+
+
 def _provider_check() -> Check:
     try:
         cfg = load_config()
@@ -77,6 +91,7 @@ def _provider_check() -> Check:
 def run_doctor() -> int:
     """Run all checks, print a table, return process exit code (0 = all ok)."""
     console = Console()
+    load_env()  # pull ~/.milyonus/.env into the environment before checking keys
     console.print(
         f"[bold {PALETTE['cyan_400']}]{GLYPH} Milyonus doctor[/] "
         f"[dim]v{__version__} · {platform.system()} {platform.machine()}[/]"
@@ -86,6 +101,7 @@ def run_doctor() -> int:
         _python_check(),
         _layout_check(),
         _config_check(),
+        _env_check(),
         _provider_check(),
     ]
 
