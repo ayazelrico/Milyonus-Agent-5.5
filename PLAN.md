@@ -69,7 +69,7 @@ Logolardan çıkarılan kimlik:
 | Loglar | `~/.milyonus/logs/` |
 | Env öneki | `MILYONUS_` |
 | Docker imajı | `milyonus/agent` |
-| Repo | `milyonus/milyonus-agent` |
+| Repo | `ayazelrico/Milyonus-Agent-5.5` |
 | Lisans | **Apache-2.0** (MIT değil — patent grant + trademark maddesi markayı korur) |
 
 **Marka kuralı:** kod, docs ve UI'da hiçbir yerde "Hermes" geçmez. Karşılaştırma sadece `docs/comparison.md` içinde, atıflı ve nesnel şekilde yapılır.

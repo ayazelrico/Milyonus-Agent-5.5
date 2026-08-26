@@ -9,5 +9,5 @@ An open-source, self-improving autonomous agent with a verified-memory core.
 - [Production](production.md) — the deployment checklist.
 - [Architecture Decisions](adr/README.md) — the choices that shape the project.
 
-See the [README](https://github.com/milyonus/milyonus-agent) for install and
+See the [README](https://github.com/ayazelrico/Milyonus-Agent-5.5) for install and
 quick start.

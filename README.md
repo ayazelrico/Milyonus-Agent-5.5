@@ -8,7 +8,7 @@ An open-source, self-improving autonomous agent — with a verified-memory core
 that closes the biggest gap in self-evolving agents: *who wrote this memory, and
 was it checked?*
 
-[![CI](https://github.com/milyonus/milyonus-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/milyonus/milyonus-agent/actions)
+[![CI](https://github.com/ayazelrico/Milyonus-Agent-5.5/actions/workflows/ci.yml/badge.svg)](https://github.com/ayazelrico/Milyonus-Agent-5.5/actions)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12%2B-blue.svg)](pyproject.toml)
 
