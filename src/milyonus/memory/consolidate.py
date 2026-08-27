@@ -16,10 +16,12 @@ the same pipeline that gates live writes.
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 
 from milyonus.memory.negative import jaccard
 from milyonus.memory.pipeline import MemoryPipeline
+from milyonus.memory.trust import current_trust
 
 _TIER_RANK = {"T0": 0, "T1": 1, "T2": 2, "T3": 3, "T4": 4}
 
@@ -29,6 +31,7 @@ class ConsolidationReport:
     processed: dict[str, int] = field(default_factory=dict)
     expired: int = 0
     deduped: int = 0
+    demoted: int = 0
     contradictions: list[tuple[str, str]] = field(default_factory=list)
 
     def summary(self) -> str:
@@ -36,7 +39,8 @@ class ConsolidationReport:
         return (
             f"processed: {p.get('active', 0)} active / {p.get('rejected', 0)} rejected / "
             f"{p.get('pending', 0)} pending · expired: {self.expired} · "
-            f"deduped: {self.deduped} · contradictions: {len(self.contradictions)}"
+            f"deduped: {self.deduped} · demoted: {self.demoted} · "
+            f"contradictions: {len(self.contradictions)}"
         )
 
 
@@ -51,6 +55,19 @@ async def consolidate(
 
     # 2. Expire due third-party claims.
     report.expired = len(store.expire_due())
+
+    # 2b. Trust decay — promotion is a security boundary, not permanent belief.
+    # Recompute each active memory's trust; demote below the floor back to
+    # quarantine (re-validatable) so unrenewed trust falls on its own.
+    now = time.time()
+    for m in store.active():
+        score = current_trust(m.trust_tier, m.last_reaffirmed_at, now, pipeline.config)
+        store.update_trust_score(m.id, score)
+        if score < pipeline.config.trust_demote_floor:
+            store.demote_to_quarantine(
+                m.id, reason=f"trust decayed to {score:.2f} — needs reconfirmation"
+            )
+            report.demoted += 1
 
     # 3. Dedupe exact-content active memories (keep highest trust).
     active = store.active()

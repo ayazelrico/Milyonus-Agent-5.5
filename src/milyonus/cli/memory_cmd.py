@@ -106,6 +106,7 @@ def memory_why(item_id: str) -> None:
     console.print(f"  evidence#: {m.evidence_hash}")
     console.print(f"  verdict  : {m.verdict or '-'}")
     console.print(f"  confirms : {m.confirmations}")
+    console.print(f"  trust    : {m.trust_score:.2f}  (reaffirmed {m.reaffirm_count}×)")
 
 
 @memory_app.command("diff")
@@ -196,3 +197,21 @@ def memory_consolidate() -> None:
     console.print(f"  {report.summary()}")
     for a, b in report.contradictions:
         console.print(f"  [{PALETTE['warn']}]contradiction:[/] {a} <-> {b}")
+
+
+@memory_app.command("reaffirm")
+def memory_reaffirm(item_id: str) -> None:
+    """Re-earn full trust for a memory (resets its decay clock)."""
+    import time
+
+    from milyonus.config.loader import load_config
+    from milyonus.memory.trust import review_at
+
+    cfg = load_config()
+    store = MemoryStore()
+    m = store.get(item_id)
+    if m is None:
+        console.print(f"[{PALETTE['risk']}]not found: {item_id}[/]")
+        raise typer.Exit(code=1)
+    store.reaffirm(item_id, review_at=review_at(m.trust_tier, time.time(), cfg.memory))
+    console.print(f"[{PALETTE['ok']}]{GLYPH} reaffirmed[/] {item_id} — trust reset to 1.00")

@@ -27,9 +27,7 @@ def run_research(query: str, *, sources: int = 6, subqueries: int = 3) -> int:
         f"[dim]search: {active_provider()} · reading up to {sources} sources…[/]\n"
     )
     report = asyncio.run(
-        deep_research(
-            query, provider=provider, max_subqueries=subqueries, max_sources=sources
-        )
+        deep_research(query, provider=provider, max_subqueries=subqueries, max_sources=sources)
     )
     console.print(report.render())
     return 0

@@ -47,6 +47,11 @@ class MemoryItem:
     confirmations: int = 0
     expires_at: float | None = None
     superseded_by: str | None = None
+    # Trust-as-a-boundary (decays since last reaffirmation).
+    trust_score: float = 1.0
+    last_reaffirmed_at: float | None = None
+    review_at: float | None = None
+    reaffirm_count: int = 0
 
 
 # Default tier for each source kind (PLAN §4.2).

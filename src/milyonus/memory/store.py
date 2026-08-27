@@ -48,7 +48,11 @@ CREATE TABLE IF NOT EXISTS memory (
     confirmations INTEGER NOT NULL DEFAULT 0,
     expires_at    REAL,
     superseded_by TEXT,
-    derived_from  TEXT
+    derived_from  TEXT,
+    trust_score   REAL NOT NULL DEFAULT 1.0,
+    last_reaffirmed_at REAL,
+    review_at     REAL,
+    reaffirm_count INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_memory_state ON memory(state);
 CREATE INDEX IF NOT EXISTS idx_memory_source ON memory(source_uri);
@@ -104,10 +108,23 @@ class MemoryStore:
         self._conn.row_factory = sqlite3.Row
         self._conn.execute("PRAGMA journal_mode=WAL")
         self._conn.executescript(_SCHEMA)
+        self._migrate()
         self._conn.commit()
 
     def close(self) -> None:
         self._conn.close()
+
+    def _migrate(self) -> None:
+        """Add trust-boundary columns to pre-existing memory tables (idempotent)."""
+        existing = {r[1] for r in self._conn.execute("PRAGMA table_info(memory)")}
+        for col, ddl in (
+            ("trust_score", "REAL NOT NULL DEFAULT 1.0"),
+            ("last_reaffirmed_at", "REAL"),
+            ("review_at", "REAL"),
+            ("reaffirm_count", "INTEGER NOT NULL DEFAULT 0"),
+        ):
+            if col not in existing:
+                self._conn.execute(f"ALTER TABLE memory ADD COLUMN {col} {ddl}")
 
     # --- ledger ---------------------------------------------------------
 
@@ -200,16 +217,44 @@ class MemoryStore:
         self._conn.execute("UPDATE memory SET state=? WHERE id=?", (state, item_id))
         self._ledger_append(action, item_id, detail)
 
-    def mark_active(self, item_id: str, *, verdict: str, confirmations: int) -> None:
+    def mark_active(
+        self,
+        item_id: str,
+        *,
+        verdict: str,
+        confirmations: int,
+        review_at: float | None = None,
+    ) -> None:
+        now = _now()
         self._conn.execute(
             "UPDATE memory SET state='active', verified_at=?, verdict=?, "
-            "confirmations=? WHERE id=?",
-            (_now(), verdict, confirmations, item_id),
+            "confirmations=?, trust_score=1.0, last_reaffirmed_at=?, review_at=? "
+            "WHERE id=?",
+            (now, verdict, confirmations, now, review_at, item_id),
         )
         self._ledger_append(
             "promote", item_id, {"verdict": verdict, "confirmations": confirmations}
         )
         self._conn.commit()
+
+    def reaffirm(self, item_id: str, *, review_at: float | None = None) -> None:
+        """Re-earn full trust: reset decay clock, bump the counter, ledger it."""
+        now = _now()
+        self._conn.execute(
+            "UPDATE memory SET trust_score=1.0, last_reaffirmed_at=?, review_at=?, "
+            "reaffirm_count=reaffirm_count+1 WHERE id=?",
+            (now, review_at, item_id),
+        )
+        self._ledger_append("reaffirm", item_id, {})
+        self._conn.commit()
+
+    def demote_to_quarantine(self, item_id: str, *, reason: str) -> None:
+        """Return an active memory to quarantine (re-validatable), not deleted."""
+        self._set_state(item_id, "pending", "demote", {"reason": reason})
+        self._conn.commit()
+
+    def update_trust_score(self, item_id: str, score: float) -> None:
+        self._conn.execute("UPDATE memory SET trust_score=? WHERE id=?", (score, item_id))
 
     def mark_rejected(self, item_id: str, *, reason: str) -> None:
         self._set_state(item_id, "rejected", "reject", {"reason": reason})
@@ -305,6 +350,10 @@ class MemoryStore:
             confirmations=row["confirmations"],
             expires_at=row["expires_at"],
             superseded_by=row["superseded_by"],
+            trust_score=row["trust_score"],
+            last_reaffirmed_at=row["last_reaffirmed_at"],
+            review_at=row["review_at"],
+            reaffirm_count=row["reaffirm_count"],
         )
 
     def get(self, item_id: str) -> MemoryItem | None:

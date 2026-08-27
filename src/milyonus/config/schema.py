@@ -42,6 +42,14 @@ class MemoryConfig(_Strict):
     t3_confirmations_required: int = Field(default=2, ge=1, le=5)
     # Unconfirmed T3 claims expire after this many days.
     t3_ttl_days: int = Field(default=14, ge=1)
+    # Promotion is a security boundary, not permanent belief: promoted memory
+    # decays and must be re-earned. Half-life (days) per tier — trust halves over
+    # this span since the last reaffirmation. T0 (operator) never decays.
+    t1_review_days: int = Field(default=180, ge=1)  # user-direct
+    t2_review_days: int = Field(default=60, ge=1)  # agent-observed
+    # Below this trust score an active memory is demoted back to quarantine
+    # (re-validatable), so unrenewed trust falls on its own.
+    trust_demote_floor: float = Field(default=0.25, ge=0.05, le=0.9)
     # Cosine similarity above which a new proposal is treated as a possible
     # rephrase of a previously rejected idea (negative-memory check).
     rephrase_similarity: float = Field(default=0.86, ge=0.5, le=0.99)

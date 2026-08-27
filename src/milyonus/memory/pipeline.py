@@ -27,6 +27,7 @@ from milyonus.memory.model import (
 )
 from milyonus.memory.negative import is_rephrase
 from milyonus.memory.store import MemoryStore
+from milyonus.memory.trust import review_at
 from milyonus.memory.verifier import RuleBasedVerifier, Verdict
 
 
@@ -115,16 +116,29 @@ class MemoryPipeline:
         # 3. Tier-specific promotion rules.
         tier = item.trust_tier
         if tier == "T1":
-            self.store.mark_active(item_id, verdict=verdict.reason, confirmations=1)
+            self.store.mark_active(
+                item_id,
+                verdict=verdict.reason,
+                confirmations=1,
+                review_at=review_at(tier, time.time(), self.config),
+            )
             return "active"
         if tier == "T2":
-            self.store.mark_active(item_id, verdict=verdict.reason, confirmations=1)
+            self.store.mark_active(
+                item_id,
+                verdict=verdict.reason,
+                confirmations=1,
+                review_at=review_at(tier, time.time(), self.config),
+            )
             return "active"
         if tier == "T3":
             needed = self.config.t3_confirmations_required
             if item.confirmations + 1 >= needed:
                 self.store.mark_active(
-                    item_id, verdict=verdict.reason, confirmations=item.confirmations + 1
+                    item_id,
+                    verdict=verdict.reason,
+                    confirmations=item.confirmations + 1,
+                    review_at=review_at(tier, time.time(), self.config),
                 )
                 return "active"
             # Not enough confirmations yet: keep pending, set an expiry so an
