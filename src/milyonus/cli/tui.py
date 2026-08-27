@@ -37,9 +37,12 @@ from milyonus.security.risk import RiskEngine
 from milyonus.skills.engine import SkillEngine
 from milyonus.skills.manage import SkillManager
 from milyonus.skills.tool import make_skill_tools
+from milyonus.tools.browser.tools import make_browser_tools
+from milyonus.tools.email.tools import make_email_tools
 from milyonus.tools.fs.tools import make_fs_tools
 from milyonus.tools.registry import ToolRegistry
 from milyonus.tools.terminal.tools import make_shell_tool
+from milyonus.tools.vision.tools import make_vision_tools
 from milyonus.tools.web.tools import make_web_tools
 
 
@@ -129,7 +132,15 @@ async def _run_session(root: Path) -> int:
     skill_manager = SkillManager()
     skill_tools = make_skill_tools(skill_engine, skill_manager)
 
-    registry = _make_registry(root, memory_tools, skill_tools, [make_schedule_tool()])
+    registry = _make_registry(
+        root,
+        memory_tools,
+        skill_tools,
+        [make_schedule_tool()],
+        make_email_tools(),
+        make_browser_tools(),
+        make_vision_tools(provider, root),
+    )
     risk_engine = RiskEngine()
 
     # Frozen L1 snapshot injected once at session start (PLAN §4.6).

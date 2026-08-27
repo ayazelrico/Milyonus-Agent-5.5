@@ -34,9 +34,12 @@ from milyonus.prompt.builder import build_system_prompt
 from milyonus.providers.base import Message, ProviderError, ToolCall
 from milyonus.providers.router import build_provider
 from milyonus.security.risk import RiskEngine
+from milyonus.tools.browser.tools import make_browser_tools
+from milyonus.tools.email.tools import make_email_tools
 from milyonus.tools.fs.tools import make_fs_tools
 from milyonus.tools.registry import ToolRegistry
 from milyonus.tools.terminal.tools import make_shell_tool
+from milyonus.tools.vision.tools import make_vision_tools
 from milyonus.tools.web.tools import make_web_tools
 
 _log = logging.getLogger("milyonus.gateway")
@@ -93,6 +96,12 @@ class GatewayServer:
             reg.register(t)
         reg.register(make_shell_tool(self.workspace))
         for t in make_web_tools():
+            reg.register(t)
+        for t in make_email_tools():
+            reg.register(t)
+        for t in make_browser_tools():
+            reg.register(t)
+        for t in make_vision_tools(self.provider, self.workspace):
             reg.register(t)
         for t in mem_tools:
             reg.register(t)

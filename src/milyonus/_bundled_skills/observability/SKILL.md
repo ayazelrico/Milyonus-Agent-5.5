@@ -25,7 +25,8 @@ Three pillars: **logs** (what happened), **metrics** (how much), **traces** (whe
 - Use levels correctly: DEBUG/INFO/WARN/ERROR. Redact secrets.
 ```python
 import logging, json
-logging.info(json.dumps({"event":"login","user_id":42,"ms":83}))
+
+logging.info(json.dumps({"event": "login", "user_id": 42, "ms": 83}))
 ```
 ## Metrics (what to watch)
 - **RED** (services): Rate (req/s), Errors (error rate), Duration (latency p50/p95/p99).

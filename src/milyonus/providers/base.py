@@ -34,6 +34,14 @@ class ToolResult:
 
 
 @dataclass(slots=True)
+class ImageBlock:
+    """A base64-encoded image attached to a message (vision input)."""
+
+    media_type: str  # e.g. "image/png", "image/jpeg"
+    data: str  # base64-encoded bytes
+
+
+@dataclass(slots=True)
 class Message:
     """One turn in the conversation, in neutral form."""
 
@@ -41,6 +49,7 @@ class Message:
     content: str = ""
     tool_calls: list[ToolCall] = field(default_factory=list)
     tool_results: list[ToolResult] = field(default_factory=list)
+    images: list[ImageBlock] = field(default_factory=list)
 
 
 @dataclass(slots=True)

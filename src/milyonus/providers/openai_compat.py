@@ -40,7 +40,20 @@ def _to_wire_messages(system: str, messages: list[Message]) -> list[dict]:
                     }
                 )
             continue
-        entry: dict = {"role": msg.role, "content": msg.content or None}
+        if msg.images:
+            content_parts: list[dict] = []
+            if msg.content:
+                content_parts.append({"type": "text", "text": msg.content})
+            for img in msg.images:
+                content_parts.append(
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:{img.media_type};base64,{img.data}"},
+                    }
+                )
+            entry: dict = {"role": msg.role, "content": content_parts}
+        else:
+            entry = {"role": msg.role, "content": msg.content or None}
         if msg.tool_calls:
             entry["tool_calls"] = [
                 {

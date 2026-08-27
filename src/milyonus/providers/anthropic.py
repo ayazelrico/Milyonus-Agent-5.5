@@ -45,6 +45,13 @@ def _to_wire_messages(messages: list[Message]) -> list[dict]:
             continue
 
         blocks = []
+        for img in msg.images:
+            blocks.append(
+                {
+                    "type": "image",
+                    "source": {"type": "base64", "media_type": img.media_type, "data": img.data},
+                }
+            )
         if msg.content:
             blocks.append({"type": "text", "text": msg.content})
         for call in msg.tool_calls:

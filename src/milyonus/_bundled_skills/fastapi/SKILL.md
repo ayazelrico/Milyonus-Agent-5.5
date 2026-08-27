@@ -26,15 +26,18 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
+
 class Item(BaseModel):
     name: str
     price: float
+
 
 @app.get("/items/{item_id}")
 async def read(item_id: int):
     if item_id < 1:
         raise HTTPException(404, "not found")
     return {"id": item_id}
+
 
 @app.post("/items")
 async def create(item: Item):

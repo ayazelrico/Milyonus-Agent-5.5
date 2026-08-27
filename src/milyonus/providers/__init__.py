@@ -2,6 +2,7 @@
 
 from milyonus.providers.base import (
     CompletionRequest,
+    ImageBlock,
     Message,
     Provider,
     ProviderError,
@@ -15,6 +16,7 @@ from milyonus.providers.router import build_provider, openrouter_config
 
 __all__ = [
     "CompletionRequest",
+    "ImageBlock",
     "Message",
     "Provider",
     "ProviderError",

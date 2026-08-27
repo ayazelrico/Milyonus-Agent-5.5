@@ -317,6 +317,7 @@ Extend Milyonus through the **skill**, **tool**, or **channel adapter** interfac
 - [x] Hardened Docker · automated PyPI + Docker Hub release
 - [x] Task-level evaluation & observability (success, tools, tokens, cost)
 - [x] Proactivity: scheduler (NL→cron), safety policy, automation suggestions
+- [x] Integrations: email (IMAP/SMTP), browser (Playwright), vision (image input)
 - [ ] Vector/embedding layer for memory similarity (opt-in)
 - [ ] Honcho-style cross-session user modelling
 - [ ] Larger PoisonBench corpus + third-party audit
