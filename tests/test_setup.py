@@ -1,6 +1,5 @@
 """Setup wizard writes a valid, provider-appropriate config incl. model choice."""
 
-from pathlib import Path
 
 from milyonus.config.loader import load_config
 
