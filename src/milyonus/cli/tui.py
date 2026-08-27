@@ -42,6 +42,49 @@ from milyonus.tools.terminal.tools import make_shell_tool
 from milyonus.tools.web.tools import make_web_tools
 
 
+def _handle_command(text: str, console: Console, loop, cfg, history: list) -> bool:
+    """Handle a /slash command. Returns True if the session should exit."""
+    cmd, _, arg = text[1:].partition(" ")
+    cmd, arg = cmd.lower().strip(), arg.strip()
+
+    if cmd in ("exit", "quit", "q"):
+        return True
+    if cmd in ("help", "?"):
+        console.print(
+            f"[{PALETTE['cyan_400']}]commands:[/]\n"
+            "  /model [name]   show or switch the model this session\n"
+            "  /usage          tokens & iterations used this session\n"
+            "  /clear          clear the conversation history\n"
+            "  /help           this list\n"
+            "  /exit           quit"
+        )
+    elif cmd == "model":
+        if not arg:
+            console.print(f"  model: [bold]{loop.provider.name}:{loop.provider.model}[/]")
+        else:
+            try:
+                new_provider = build_provider(cfg.provider, model=arg)
+                loop.provider = new_provider
+                console.print(
+                    f"  [{PALETTE['ok']}]switched to[/] "
+                    f"[bold]{new_provider.name}:{new_provider.model}[/]"
+                )
+            except Exception as exc:  # noqa: BLE001 - surface to the user
+                console.print(f"  [{PALETTE['risk']}]could not switch:[/] {exc}")
+    elif cmd == "usage":
+        b = loop.budget
+        console.print(
+            f"  iterations {b.used_iterations}/{b.max_iterations} · "
+            f"tokens {b.used_tokens} · pressure {b.pressure():.0%}"
+        )
+    elif cmd == "clear":
+        history.clear()
+        console.print(f"  [{PALETTE['chrome_500']}]history cleared[/]")
+    else:
+        console.print(f"  [{PALETTE['warn']}]unknown command:[/] /{cmd}  (try /help)")
+    return False
+
+
 def _make_registry(root: Path, *extra_tool_groups: list) -> ToolRegistry:
     reg = ToolRegistry()
     for tool in make_fs_tools(root):
@@ -171,8 +214,10 @@ async def _run_session(root: Path) -> int:
         user_input = user_input.strip()
         if not user_input:
             continue
-        if user_input in ("/exit", "/quit"):
-            break
+        if user_input.startswith("/"):
+            if _handle_command(user_input, console, loop, cfg, history):
+                break  # /exit or /quit
+            continue
 
         history.append(Message(role="user", content=user_input))
         store.append_message(sid, turn=turn, role="user", content=user_input)

@@ -137,5 +137,5 @@ def render_splash(
             info.append(f"  ·  session {session}", style=PALETTE["chrome_500"])
         console.print(info)
     if workspace:
-        console.print(f"{indent} [dim]workspace: {workspace}  ·  Ctrl+D to exit[/]")
+        console.print(f"{indent} [dim]workspace: {workspace}  ·  /help for commands  ·  Ctrl+D to exit[/]")
     console.print()
