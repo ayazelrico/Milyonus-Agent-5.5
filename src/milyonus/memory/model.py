@@ -54,6 +54,8 @@ class MemoryItem:
     last_reaffirmed_at: float | None = None
     review_at: float | None = None
     reaffirm_count: int = 0
+    trust_ceiling: float = 1.0
+    sensitivity: str = "normal"  # normal | sensitive (security/authority)
 
 
 # Default tier for each source kind (PLAN §4.2).

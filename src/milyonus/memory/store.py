@@ -54,7 +54,9 @@ CREATE TABLE IF NOT EXISTS memory (
     review_at     REAL,
     reaffirm_count INTEGER NOT NULL DEFAULT 0,
     signature      TEXT,
-    key_fingerprint TEXT
+    key_fingerprint TEXT,
+    trust_ceiling  REAL NOT NULL DEFAULT 1.0,
+    sensitivity    TEXT NOT NULL DEFAULT 'normal'
 );
 CREATE INDEX IF NOT EXISTS idx_memory_state ON memory(state);
 CREATE INDEX IF NOT EXISTS idx_memory_source ON memory(source_uri);
@@ -79,6 +81,10 @@ CREATE TABLE IF NOT EXISTS negative_memory (
 """
 
 _GENESIS = "0" * 64
+
+
+class ReaffirmError(Exception):
+    """Raised when a reaffirm is rejected (e.g. rate-limited)."""
 
 
 def _now() -> float:
@@ -126,6 +132,8 @@ class MemoryStore:
             ("reaffirm_count", "INTEGER NOT NULL DEFAULT 0"),
             ("signature", "TEXT"),
             ("key_fingerprint", "TEXT"),
+            ("trust_ceiling", "REAL NOT NULL DEFAULT 1.0"),
+            ("sensitivity", "TEXT NOT NULL DEFAULT 'normal'"),
         ):
             if col not in existing:
                 self._conn.execute(f"ALTER TABLE memory ADD COLUMN {col} {ddl}")
@@ -190,12 +198,15 @@ class MemoryStore:
     ) -> str:
         """Insert a candidate in state='pending'. This is the ONLY insertion
         path; nothing enters as 'active' (no direct write guarantee)."""
+        from milyonus.memory.trust import classify_sensitivity
+
         mid = f"mem_{uuid.uuid4().hex[:12]}"
         eh = evidence_hash(content, provenance)
+        sensitivity = classify_sensitivity(content)
         self._conn.execute(
             "INSERT INTO memory(id,content,trust_tier,state,source_kind,source_uri,"
-            "session_id,turn_id,actor,evidence_hash,created_at,derived_from) "
-            "VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+            "session_id,turn_id,actor,evidence_hash,created_at,derived_from,sensitivity) "
+            "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 mid,
                 content,
@@ -209,9 +220,12 @@ class MemoryStore:
                 eh,
                 _now(),
                 derived_from,
+                sensitivity,
             ),
         )
-        self._ledger_append("ingest", mid, {"tier": trust_tier, "eh": eh})
+        self._ledger_append(
+            "ingest", mid, {"tier": trust_tier, "eh": eh, "sensitivity": sensitivity}
+        )
         self._conn.commit()
         return mid
 
@@ -232,8 +246,8 @@ class MemoryStore:
         now = _now()
         self._conn.execute(
             "UPDATE memory SET state='active', verified_at=?, verdict=?, "
-            "confirmations=?, trust_score=1.0, last_reaffirmed_at=?, review_at=? "
-            "WHERE id=?",
+            "confirmations=?, trust_score=1.0, trust_ceiling=1.0, last_reaffirmed_at=?, "
+            "review_at=? WHERE id=?",
             (now, verdict, confirmations, now, review_at, item_id),
         )
         self._ledger_append(
@@ -241,16 +255,61 @@ class MemoryStore:
         )
         self._conn.commit()
 
-    def reaffirm(self, item_id: str, *, review_at: float | None = None) -> None:
-        """Re-earn full trust: reset decay clock, bump the counter, ledger it."""
+    def reaffirm(
+        self,
+        item_id: str,
+        *,
+        review_at: float | None = None,
+        min_interval_seconds: float = 0.0,
+        signal: str = "weak",
+        weak_floor: float = 0.5,
+    ) -> float:
+        """Re-earn trust — an explicit, rate-limited human action (H2/H3).
+
+        A weak (normal user) reaffirm restores trust to a ceiling that drops with
+        repetition after the 3rd, so a patient attacker can't keep an item at full
+        trust forever. A strong (operator-signed) reaffirm restores 1.0. Rejects a
+        reaffirm inside `min_interval_seconds` of the previous one. Returns the
+        applied ceiling."""
+        item = self.get(item_id)
+        if item is None:
+            raise ReaffirmError(f"no such memory: {item_id}")
         now = _now()
+        # Rate-limit only against a *previous reaffirm*, not the promotion
+        # timestamp (mark_active also sets last_reaffirmed_at).
+        if (
+            item.reaffirm_count > 0
+            and item.last_reaffirmed_at is not None
+            and (now - item.last_reaffirmed_at) < min_interval_seconds
+        ):
+            wait_h = (min_interval_seconds - (now - item.last_reaffirmed_at)) / 3600
+            raise ReaffirmError(
+                f"reaffirmed too recently — try again in {wait_h:.1f}h "
+                "(rate limit prevents reaffirm floods)"
+            )
+        new_count = item.reaffirm_count + 1
+        if signal == "strong":
+            ceiling = 1.0
+        else:
+            ceiling = max(weak_floor, 1.0 - 0.1 * max(0, new_count - 3))
+        interval = (now - item.last_reaffirmed_at) if item.last_reaffirmed_at else None
         self._conn.execute(
-            "UPDATE memory SET trust_score=1.0, last_reaffirmed_at=?, review_at=?, "
-            "reaffirm_count=reaffirm_count+1 WHERE id=?",
-            (now, review_at, item_id),
+            "UPDATE memory SET trust_score=?, trust_ceiling=?, last_reaffirmed_at=?, "
+            "review_at=?, reaffirm_count=? WHERE id=?",
+            (ceiling, ceiling, now, review_at, new_count, item_id),
         )
-        self._ledger_append("reaffirm", item_id, {})
+        self._ledger_append(
+            "reaffirm",
+            item_id,
+            {
+                "signal": signal,
+                "ceiling": round(ceiling, 3),
+                "count": new_count,
+                "interval_s": round(interval) if interval else None,
+            },
+        )
         self._conn.commit()
+        return ceiling
 
     def demote_to_quarantine(self, item_id: str, *, reason: str) -> None:
         """Return an active memory to quarantine (re-validatable), not deleted."""
@@ -406,6 +465,8 @@ class MemoryStore:
             last_reaffirmed_at=row["last_reaffirmed_at"],
             review_at=row["review_at"],
             reaffirm_count=row["reaffirm_count"],
+            trust_ceiling=row["trust_ceiling"],
+            sensitivity=row["sensitivity"],
         )
 
     def get(self, item_id: str) -> MemoryItem | None:

@@ -54,6 +54,19 @@ class MemoryConfig(_Strict):
     # signed `activate` AND at least this many seconds since it was staged
     # (AND-layered review gap). Time-window alone never activates T0.
     t0_review_seconds: int = Field(default=300, ge=0)
+    # H2: a memory item can be reaffirmed at most once per this many hours — a
+    # flood of manipulative messages can't keep resetting the decay clock.
+    reaffirm_min_interval_hours: int = Field(default=24, ge=0)
+    # H3: a weak (normal user) reaffirm restores trust to a ceiling that drops
+    # with repetition after the 3rd; a strong (operator-signed) reaffirm -> 1.0.
+    weak_reaffirm_floor: float = Field(default=0.5, ge=0.2, le=1.0)
+    # H3: flag an item as anomalous once it has been reaffirmed this many times.
+    reaffirm_anomaly_count: int = Field(default=5, ge=2)
+    # H4: security/authority-sensitive memory decays faster (half-life * factor).
+    sensitive_half_life_factor: float = Field(default=0.25, ge=0.05, le=1.0)
+    # H4: if more than this share of demoted memory gets reaffirmed back, the
+    # tier's half-life is likely too aggressive (surfaced by `memory stats`).
+    false_positive_warn_rate: float = Field(default=0.30, ge=0.05, le=0.9)
     # Cosine similarity above which a new proposal is treated as a possible
     # rephrase of a previously rejected idea (negative-memory check).
     rephrase_similarity: float = Field(default=0.86, ge=0.5, le=0.99)

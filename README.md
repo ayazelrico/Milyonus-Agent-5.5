@@ -11,7 +11,7 @@ it closes the biggest gap in self-evolving agents: *who wrote this memory, and w
 [![License](https://img.shields.io/badge/license-Apache--2.0-1E4FD8.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12%2B-35C6F4.svg)](pyproject.toml)
 [![Version](https://img.shields.io/badge/version-5.5.0-071233.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-227%20passing-22C55E.svg)](tests)
+[![Tests](https://img.shields.io/badge/tests-235%20passing-22C55E.svg)](tests)
 [![PoisonBench](https://img.shields.io/badge/PoisonBench%20ASR-0%25-22C55E.svg)](docs/benchmarks.md)
 
 </div>
@@ -291,13 +291,27 @@ floor, the nightly consolidation **demotes it back to quarantine** (re-validatab
 not deleted) — so it drops out of the agent's defaults until a human re-earns it:
 
 ```bash
-milyonus memory why <id>        # shows trust: 0.41 (reaffirmed 2×)
-milyonus memory reaffirm <id>   # explicit human action re-earns full trust
+milyonus memory why <id>        # trust: 0.41 (ceiling 0.80, reaffirmed 2×)
+milyonus memory reaffirm <id>   # weak human reaffirm — diminishing returns
+milyonus memory reaffirm <id> --sign ~/operator-key.pem   # strong: restores 1.00
+milyonus memory review          # what the boundary flagged: demoted / due / anomalous
+milyonus memory stats           # tier & sensitivity mix + false-positive recovery rate
 ```
 
 Reaffirmation is a **human-only** action (the agent has no reaffirm tool — it
-cannot infer "the user still agrees"), and is rate-limited so a flood of
-manipulative messages can't keep resetting the clock.
+cannot infer "the user still agrees"), and it resists *patient* attackers, not
+just loud ones:
+
+- **Rate-limited** — a flood of manipulative messages can't keep resetting the clock.
+- **Diminishing returns** — repeated *weak* reaffirms restore less each time (a
+  falling trust ceiling); only a **strong, operator-signed** reaffirm restores full
+  trust. Weak repetition alone can never hold a memory at 1.00 forever.
+- **Sensitivity-aware decay** — memory that touches authority, access, or approval
+  ("the agent may deploy without confirmation") decays **~4× faster** than a taste
+  preference, so a stale security fact expires long before a stale UI setting.
+- **Not silent** — every auto-demotion and reaffirm anomaly surfaces in
+  `memory review`, and `memory stats` reports the false-positive rate so decay that's
+  too aggressive is visible, not guessed at.
 
 **T0 is an authenticated, out-of-band boundary — unforgeable from any text.**
 

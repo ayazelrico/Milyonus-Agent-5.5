@@ -61,7 +61,14 @@ async def consolidate(
     # quarantine (re-validatable) so unrenewed trust falls on its own.
     now = time.time()
     for m in store.active():
-        score = current_trust(m.trust_tier, m.last_reaffirmed_at, now, pipeline.config)
+        score = current_trust(
+            m.trust_tier,
+            m.last_reaffirmed_at,
+            now,
+            pipeline.config,
+            ceiling=m.trust_ceiling,
+            sensitivity=m.sensitivity,
+        )
         store.update_trust_score(m.id, score)
         if score < pipeline.config.trust_demote_floor:
             store.demote_to_quarantine(

@@ -106,7 +106,11 @@ def memory_why(item_id: str) -> None:
     console.print(f"  evidence#: {m.evidence_hash}")
     console.print(f"  verdict  : {m.verdict or '-'}")
     console.print(f"  confirms : {m.confirmations}")
-    console.print(f"  trust    : {m.trust_score:.2f}  (reaffirmed {m.reaffirm_count}×)")
+    console.print(
+        f"  trust    : {m.trust_score:.2f}  (ceiling {m.trust_ceiling:.2f}, "
+        f"reaffirmed {m.reaffirm_count}×)"
+    )
+    console.print(f"  sensitiv.: {m.sensitivity}")
 
 
 @memory_app.command("diff")
@@ -200,11 +204,25 @@ def memory_consolidate() -> None:
 
 
 @memory_app.command("reaffirm")
-def memory_reaffirm(item_id: str) -> None:
-    """Re-earn full trust for a memory (resets its decay clock)."""
+def memory_reaffirm(
+    item_id: str,
+    sign: str = typer.Option(
+        None,
+        "--sign",
+        help="Path to an operator Ed25519 private key — a signed (strong) "
+        "reaffirm restores full trust; without it the reaffirm is weak and its "
+        "ceiling drops with repetition (H3).",
+    ),
+) -> None:
+    """Re-earn trust for a memory — an explicit, rate-limited human action.
+
+    Weak (default) reaffirm has diminishing returns; a strong operator-signed
+    reaffirm restores 1.00. Reaffirming is a security boundary, not an undo:
+    it is rate-limited and never available to the agent itself."""
     import time
 
     from milyonus.config.loader import load_config
+    from milyonus.memory.store import ReaffirmError
     from milyonus.memory.trust import review_at
 
     cfg = load_config()
@@ -213,5 +231,118 @@ def memory_reaffirm(item_id: str) -> None:
     if m is None:
         console.print(f"[{PALETTE['risk']}]not found: {item_id}[/]")
         raise typer.Exit(code=1)
-    store.reaffirm(item_id, review_at=review_at(m.trust_tier, time.time(), cfg.memory))
-    console.print(f"[{PALETTE['ok']}]{GLYPH} reaffirmed[/] {item_id} — trust reset to 1.00")
+
+    signal = "weak"
+    if sign:
+        from milyonus.security.operator import crypto_available, verify
+        from milyonus.security.operator import sign as op_sign
+
+        if not crypto_available():
+            console.print(
+                f"[{PALETTE['risk']}]cryptography not installed (pip: milyonus[admin])[/]"
+            )
+            raise typer.Exit(code=1)
+        try:
+            sig = op_sign(sign, m.content)
+            if not verify(m.content, sig):
+                raise ValueError("signature did not verify against operator public key")
+            signal = "strong"
+        except Exception as exc:  # noqa: BLE001 - surface to operator
+            console.print(f"[{PALETTE['risk']}]signed reaffirm failed:[/] {exc}")
+            raise typer.Exit(code=1) from exc
+
+    try:
+        ceiling = store.reaffirm(
+            item_id,
+            review_at=review_at(m.trust_tier, time.time(), cfg.memory),
+            min_interval_seconds=cfg.memory.reaffirm_min_interval_hours * 3600,
+            signal=signal,
+            weak_floor=cfg.memory.weak_reaffirm_floor,
+        )
+    except ReaffirmError as exc:
+        console.print(f"[{PALETTE['warn']}]{GLYPH} rate-limited:[/] {exc}")
+        raise typer.Exit(code=1) from exc
+    tag = "strong (signed)" if signal == "strong" else "weak"
+    console.print(
+        f"[{PALETTE['ok']}]{GLYPH} reaffirmed[/] {item_id} — {tag}, trust ceiling {ceiling:.2f}"
+    )
+
+
+@memory_app.command("review")
+def memory_review() -> None:
+    """What the trust boundary flagged for a human: memory auto-demoted by decay,
+    items due for review, and reaffirm anomalies (H4 — quarantine is not silent)."""
+    from milyonus.config.loader import load_config
+
+    cfg = load_config()
+    store = MemoryStore()
+    now = time.time()
+
+    demoted = [
+        m
+        for m in store.by_state("pending")
+        if m.reaffirm_count > 0 or m.last_reaffirmed_at is not None
+    ]
+    due = [m for m in store.active() if m.review_at is not None and m.review_at <= now]
+    anomalous = [m for m in store.active() if m.reaffirm_count >= cfg.memory.reaffirm_anomaly_count]
+
+    if not (demoted or due or anomalous):
+        console.print(f"[dim]{GLYPH} nothing needs review — the boundary is quiet.[/]")
+        raise typer.Exit()
+
+    if demoted:
+        console.print(f"[bold {PALETTE['quarantine']}]{GLYPH} Auto-demoted (trust decayed):[/]")
+        for m in demoted:
+            console.print(f"  [{m.trust_tier}] {m.content}  [dim]{m.id}[/]")
+    if due:
+        console.print(f"[bold {PALETTE['warn']}]{GLYPH} Due for review:[/]")
+        for m in due:
+            console.print(f"  [{m.trust_tier}] {m.content}  [dim]{m.id}[/]")
+    if anomalous:
+        console.print(
+            f"[bold {PALETTE['risk']}]{GLYPH} Reaffirm anomalies "
+            f"(≥{cfg.memory.reaffirm_anomaly_count}× — possible patient poisoning):[/]"
+        )
+        for m in anomalous:
+            console.print(f"  [{m.trust_tier}] {m.content}  [dim]({m.reaffirm_count}× · {m.id})[/]")
+
+
+@memory_app.command("stats")
+def memory_stats() -> None:
+    """Trust-boundary health: tier mix, sensitivity mix, and the false-positive
+    recovery rate — how often auto-demoted memory gets reaffirmed back (H4)."""
+    from milyonus.config.loader import load_config
+
+    cfg = load_config()
+    store = MemoryStore()
+    active = store.active()
+    pending = store.by_state("pending")
+
+    tiers: dict[str, int] = {}
+    sensitive = 0
+    for m in active:
+        tiers[m.trust_tier] = tiers.get(m.trust_tier, 0) + 1
+        if m.sensitivity == "sensitive":
+            sensitive += 1
+
+    # Demotions and reaffirm-recoveries from the ledger → false-positive rate.
+    demotions = recoveries = 0
+    for e in store.ledger_entries(limit=10000):
+        if e["action"] == "demote":
+            demotions += 1
+        elif e["action"] == "reaffirm":
+            recoveries += 1
+    fp_rate = (recoveries / demotions) if demotions else 0.0
+
+    console.print(f"[bold {PALETTE['cyan_400']}]{GLYPH} Memory trust health[/]")
+    console.print(f"  active     : {len(active)} ({sensitive} sensitive)")
+    console.print(f"  quarantine : {len(pending)}")
+    console.print("  tiers      : " + ", ".join(f"{k}={v}" for k, v in sorted(tiers.items())))
+    console.print(f"  demotions  : {demotions}  ·  reaffirm-recoveries: {recoveries}")
+    color = PALETTE["risk"] if fp_rate >= cfg.memory.false_positive_warn_rate else PALETTE["ok"]
+    console.print(f"  FP recovery: [{color}]{fp_rate:.0%}[/]  (reaffirmed-back / demoted)")
+    if fp_rate >= cfg.memory.false_positive_warn_rate:
+        console.print(
+            f"  [{PALETTE['warn']}]↑ high recovery rate — decay may be too aggressive; "
+            "consider raising review windows.[/]"
+        )
