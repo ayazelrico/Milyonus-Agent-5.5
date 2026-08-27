@@ -52,7 +52,9 @@ CREATE TABLE IF NOT EXISTS memory (
     trust_score   REAL NOT NULL DEFAULT 1.0,
     last_reaffirmed_at REAL,
     review_at     REAL,
-    reaffirm_count INTEGER NOT NULL DEFAULT 0
+    reaffirm_count INTEGER NOT NULL DEFAULT 0,
+    signature      TEXT,
+    key_fingerprint TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_memory_state ON memory(state);
 CREATE INDEX IF NOT EXISTS idx_memory_source ON memory(source_uri);
@@ -122,6 +124,8 @@ class MemoryStore:
             ("last_reaffirmed_at", "REAL"),
             ("review_at", "REAL"),
             ("reaffirm_count", "INTEGER NOT NULL DEFAULT 0"),
+            ("signature", "TEXT"),
+            ("key_fingerprint", "TEXT"),
         ):
             if col not in existing:
                 self._conn.execute(f"ALTER TABLE memory ADD COLUMN {col} {ddl}")
@@ -252,6 +256,54 @@ class MemoryStore:
         """Return an active memory to quarantine (re-validatable), not deleted."""
         self._set_state(item_id, "pending", "demote", {"reason": reason})
         self._conn.commit()
+
+    def stage_t0(self, content: str, *, signature: str, key_fingerprint: str) -> str:
+        """Insert a signed operator (T0) claim in the staged state (passive —
+        not yet a default). Activation requires a second signature (see t0.py)."""
+        from milyonus.memory.model import Provenance
+
+        prov = Provenance(source_kind="operator", actor="operator")
+        mid = f"mem_{uuid.uuid4().hex[:12]}"
+        eh = evidence_hash(content, prov)
+        now = _now()
+        self._conn.execute(
+            "INSERT INTO memory(id,content,trust_tier,state,source_kind,source_uri,"
+            "session_id,turn_id,actor,evidence_hash,created_at,signature,key_fingerprint)"
+            " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                mid,
+                content,
+                "T0",
+                "t0_staged",
+                "operator",
+                None,
+                None,
+                None,
+                "operator",
+                eh,
+                now,
+                signature,
+                key_fingerprint,
+            ),
+        )
+        self._ledger_append("t0_stage", mid, {"fingerprint": key_fingerprint, "eh": eh})
+        self._conn.commit()
+        return mid
+
+    def activate_t0(self, item_id: str, *, signature: str) -> None:
+        """Promote a staged T0 to active (never decays). Caller must have
+        verified the second signature + review gap (see memory/t0.py)."""
+        now = _now()
+        self._conn.execute(
+            "UPDATE memory SET state='active', verified_at=?, verdict='operator-signed',"
+            " trust_score=1.0, last_reaffirmed_at=?, review_at=NULL, signature=? WHERE id=?",
+            (now, now, signature, item_id),
+        )
+        self._ledger_append("t0_activate", item_id, {})
+        self._conn.commit()
+
+    def staged_t0(self) -> list[MemoryItem]:
+        return self.by_state("t0_staged")
 
     def update_trust_score(self, item_id: str, score: float) -> None:
         self._conn.execute("UPDATE memory SET trust_score=? WHERE id=?", (score, item_id))

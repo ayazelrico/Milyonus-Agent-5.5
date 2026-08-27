@@ -19,7 +19,9 @@ SourceKind = Literal[
 ]
 
 # Lifecycle state of a memory row.
-MemoryState = Literal["pending", "active", "rejected", "revoked", "expired", "superseded"]
+MemoryState = Literal[
+    "pending", "active", "rejected", "revoked", "expired", "superseded", "t0_staged"
+]
 
 
 @dataclass(slots=True)

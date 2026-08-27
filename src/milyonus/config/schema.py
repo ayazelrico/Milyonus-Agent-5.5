@@ -50,6 +50,10 @@ class MemoryConfig(_Strict):
     # Below this trust score an active memory is demoted back to quarantine
     # (re-validatable), so unrenewed trust falls on its own.
     trust_demote_floor: float = Field(default=0.25, ge=0.05, le=0.9)
+    # T0 is the operator-authority tier. A staged T0 write requires a SECOND
+    # signed `activate` AND at least this many seconds since it was staged
+    # (AND-layered review gap). Time-window alone never activates T0.
+    t0_review_seconds: int = Field(default=300, ge=0)
     # Cosine similarity above which a new proposal is treated as a possible
     # rephrase of a previously rejected idea (negative-memory check).
     rephrase_similarity: float = Field(default=0.86, ge=0.5, le=0.99)
