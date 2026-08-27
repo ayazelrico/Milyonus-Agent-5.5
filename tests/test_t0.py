@@ -15,6 +15,8 @@ from milyonus.memory.t0 import (
 )
 from milyonus.security import operator as op
 
+pytest.importorskip("cryptography")  # T0 signing needs the [admin] extra
+
 
 def _keys(tmp_path, monkeypatch):
     monkeypatch.setenv("MILYONUS_HOME", str(tmp_path))
