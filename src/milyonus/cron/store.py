@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from milyonus.config.paths import state_db
+from milyonus.cron.schedule import parse_schedule
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS cron_tasks (
@@ -25,6 +26,7 @@ CREATE TABLE IF NOT EXISTS cron_tasks (
     enabled     INTEGER NOT NULL DEFAULT 1,
     last_run    REAL,
     next_run    REAL,
+    autonomy    TEXT NOT NULL DEFAULT 'safe-only',
     created_at  REAL NOT NULL
 );
 """
@@ -52,6 +54,7 @@ class CronTask:
     last_run: float | None
     next_run: float | None
     created_at: float
+    autonomy: str = "safe-only"
 
 
 class CronStore:
@@ -63,14 +66,27 @@ class CronStore:
         self._conn.executescript(_SCHEMA)
         self._conn.commit()
 
-    def add(self, name: str, schedule: str, prompt: str, *, channel=None, user_ref=None) -> str:
-        interval = parse_interval(schedule)
+    def add(
+        self,
+        name: str,
+        schedule: str,
+        prompt: str,
+        *,
+        channel=None,
+        user_ref=None,
+        autonomy: str = "safe-only",
+    ) -> str:
+        """Add a scheduled task. `schedule` may be an interval ("30m"), a cron
+        expression ("0 9 * * *"), or natural language ("every day at 9:00").
+        `autonomy` is "safe-only" (auto-approve only reversible tools) or
+        "authorized" (the user pre-approved outward/irreversible actions)."""
+        sched = parse_schedule(schedule)
         tid = f"cron_{uuid.uuid4().hex[:10]}"
         now = time.time()
         self._conn.execute(
             "INSERT INTO cron_tasks(id,name,schedule,prompt,channel,user_ref,"
-            "enabled,next_run,created_at) VALUES(?,?,?,?,?,?,1,?,?)",
-            (tid, name, schedule, prompt, channel, user_ref, now + interval, now),
+            "enabled,next_run,autonomy,created_at) VALUES(?,?,?,?,?,?,1,?,?,?)",
+            (tid, name, schedule, prompt, channel, user_ref, sched.next_after(now), autonomy, now),
         )
         self._conn.commit()
         return tid
@@ -107,7 +123,7 @@ class CronStore:
         if task is None:
             return
         now = time.time()
-        nxt = now + parse_interval(task.schedule)
+        nxt = parse_schedule(task.schedule).next_after(now)
         self._conn.execute(
             "UPDATE cron_tasks SET last_run=?, next_run=? WHERE id=?", (now, nxt, task_id)
         )

@@ -27,6 +27,7 @@ from milyonus.memory.render import build_snapshot
 from milyonus.memory.store import MemoryStore
 from milyonus.memory.tool import make_memory_tools
 from milyonus.memory.verifier import ModelVerifier, RuleBasedVerifier
+from milyonus.proactive.tool import make_schedule_tool
 from milyonus.prompt.builder import build_system_prompt, skill_index_section
 from milyonus.providers.base import Message, ProviderError, ToolCall
 from milyonus.providers.router import build_provider
@@ -84,7 +85,7 @@ async def _run_session(root: Path) -> int:
     skill_manager = SkillManager()
     skill_tools = make_skill_tools(skill_engine, skill_manager)
 
-    registry = _make_registry(root, memory_tools, skill_tools)
+    registry = _make_registry(root, memory_tools, skill_tools, [make_schedule_tool()])
     risk_engine = RiskEngine()
 
     # Frozen L1 snapshot injected once at session start (PLAN §4.6).

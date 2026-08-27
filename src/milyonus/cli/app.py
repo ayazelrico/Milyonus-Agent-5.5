@@ -91,9 +91,11 @@ def chat() -> None:
     raise typer.Exit(code=run_tui())
 
 
+from milyonus.cli.cron_cmd import cron_app  # noqa: E402
 from milyonus.cli.eval_cmd import eval_app  # noqa: E402
 from milyonus.cli.gateway_cmd import gateway_app  # noqa: E402
 from milyonus.cli.memory_cmd import audit_app, memory_app  # noqa: E402
+from milyonus.cli.proactive_cmd import proactive_app  # noqa: E402
 from milyonus.cli.selfmod_cmd import selfmod_app  # noqa: E402
 from milyonus.cli.skills_cmd import skills_app  # noqa: E402
 
@@ -103,6 +105,8 @@ app.add_typer(skills_app, name="skills")
 app.add_typer(gateway_app, name="gateway")
 app.add_typer(selfmod_app, name="selfmod")
 app.add_typer(eval_app, name="eval")
+app.add_typer(cron_app, name="cron")
+app.add_typer(proactive_app, name="proactive")
 
 
 def main() -> None:

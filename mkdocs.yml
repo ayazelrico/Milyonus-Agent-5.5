@@ -16,6 +16,7 @@ nav:
   - Home: index.md
   - Benchmarks: benchmarks.md
   - Evaluation: evaluation.md
+  - Proactivity: proactivity.md
   - Comparison: comparison.md
   - WhatsApp: whatsapp.md
   - Editor (ACP): acp.md

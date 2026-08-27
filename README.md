@@ -271,6 +271,8 @@ milyonus skills   list | view | why
 milyonus audit    verify | log
 milyonus gateway  start | pair
 milyonus selfmod  log | rollback
+milyonus cron     add | list | remove   # scheduled tasks (NL/cron/interval)
+milyonus proactive start | suggest    # run the scheduler; suggest automations
 milyonus eval     run | tasks    # task-level evaluation + cost/observability
 milyonus acp                 run as an editor agent (ACP)
 ```
@@ -314,6 +316,7 @@ Extend Milyonus through the **skill**, **tool**, or **channel adapter** interfac
 - [x] Self-modification harness · subagent delegation · MCP
 - [x] Hardened Docker · automated PyPI + Docker Hub release
 - [x] Task-level evaluation & observability (success, tools, tokens, cost)
+- [x] Proactivity: scheduler (NL→cron), safety policy, automation suggestions
 - [ ] Vector/embedding layer for memory similarity (opt-in)
 - [ ] Honcho-style cross-session user modelling
 - [ ] Larger PoisonBench corpus + third-party audit
