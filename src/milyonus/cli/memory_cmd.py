@@ -143,8 +143,24 @@ def memory_revoke(
 
 @memory_app.command("search")
 def memory_search(query: str) -> None:
-    """Search content in active memory."""
+    """Search active memory — trust-weighted semantic recall when the embedding
+    layer is on, substring otherwise."""
+    from milyonus.config.loader import load_config
+    from milyonus.memory.semantic import SemanticMemory
+
+    cfg = load_config()
     store = MemoryStore()
+    sem = SemanticMemory(store, config=cfg.memory)
+    if sem.enabled:
+        recalls = sem.recall(query)
+        if recalls:
+            console.print(f"[dim]{GLYPH} semantic recall ({sem.embedder.signature})[/]")
+            for r in recalls:
+                console.print(
+                    f"[{r.item.trust_tier}] {r.item.content}  "
+                    f"[dim](cos {r.cosine:.2f} · trust {r.trust:.2f} · {r.item.id})[/]"
+                )
+            return
     q = query.casefold()
     hits = [m for m in store.active() if q in m.content.casefold()]
     if not hits:
@@ -152,6 +168,28 @@ def memory_search(query: str) -> None:
         raise typer.Exit()
     for m in hits:
         console.print(f"[{m.trust_tier}] {m.content}  [dim]{m.id}[/]")
+
+
+@memory_app.command("reindex")
+def memory_reindex() -> None:
+    """(Re)build vector embeddings for all active memory — run after enabling or
+    switching the embedder."""
+    from milyonus.config.env import load_env
+    from milyonus.config.loader import load_config
+    from milyonus.memory.semantic import SemanticMemory
+
+    load_env()
+    cfg = load_config()
+    store = MemoryStore()
+    sem = SemanticMemory(store, config=cfg.memory)
+    if not sem.enabled:
+        console.print(f"[{PALETTE['warn']}]{GLYPH} embedder is 'none' — nothing to index.[/]")
+        raise typer.Exit()
+    n = sem.reindex()
+    console.print(
+        f"[{PALETTE['ok']}]{GLYPH} indexed {n} memories[/] "
+        f"[dim]({sem.embedder.signature})[/]"
+    )
 
 
 @audit_app.command("verify")

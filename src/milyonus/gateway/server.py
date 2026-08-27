@@ -67,6 +67,12 @@ class GatewayServer:
         self.workspace = workspace
         self.pairing = pairing or PairingManager()
         self.mem_store = mem_store or MemoryStore()
+        try:
+            from milyonus.memory.semantic import SemanticMemory
+
+            self.semantic = SemanticMemory(self.mem_store, config=config.memory)
+        except Exception:
+            self.semantic = None
         self.provider = build_provider(config.provider)
         self.risk = RiskEngine()
         self._sessions: dict[str, _UserSession] = {}
@@ -83,7 +89,9 @@ class GatewayServer:
         return self._sessions.setdefault(self._session_key(msg), _UserSession())
 
     def _build_loop(self, adapter: ChannelAdapter, msg: InboundMessage) -> AgentLoop:
-        pipeline = MemoryPipeline(self.mem_store, config=self.config.memory)
+        pipeline = MemoryPipeline(
+            self.mem_store, config=self.config.memory, semantic=self.semantic
+        )
         # Group content is lower trust; memory proposals from groups are T3.
         default_source = "third-party" if msg.is_group else "agent-observed"
         mem_tools = make_memory_tools(

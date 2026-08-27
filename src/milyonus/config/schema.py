@@ -70,6 +70,18 @@ class MemoryConfig(_Strict):
     # Cosine similarity above which a new proposal is treated as a possible
     # rephrase of a previously rejected idea (negative-memory check).
     rephrase_similarity: float = Field(default=0.86, ge=0.5, le=0.99)
+    # Vector/embedding recall layer. "hashing" is the deps-free default (lexical
+    # vector, always on); "openai" uses a real embeddings endpoint; "none" turns
+    # semantic recall off and falls back to substring search. Recall is always
+    # read-only and trust-weighted (cosine * current_trust), so it can never let
+    # a low-trust match outrank a trusted one.
+    embedder: Literal["hashing", "openai", "none"] = "hashing"
+    embed_model: str = "text-embedding-3-small"
+    embed_dim: int = Field(default=256, ge=64, le=4096)
+    embed_base_url: str | None = None
+    embed_api_key_env: str | None = None
+    # How many memories semantic recall returns (after trust re-ranking).
+    vector_recall_k: int = Field(default=8, ge=1, le=50)
     # L1 frozen-snapshot character budgets.
     agent_profile_chars: int = Field(default=2200, ge=500)
     user_profile_chars: int = Field(default=1400, ge=500)

@@ -121,7 +121,17 @@ async def _run_session(root: Path) -> int:
         verifier = ModelVerifier(verifier_provider, fallback=RuleBasedVerifier())
     except Exception:
         verifier = RuleBasedVerifier()
-    pipeline = MemoryPipeline(mem_store, config=cfg.memory, verifier=verifier)
+    # Semantic recall layer (trust-weighted vector memory); degrades to lexical
+    # if embeddings are disabled or unavailable.
+    from milyonus.memory.semantic import SemanticMemory
+
+    try:
+        semantic = SemanticMemory(mem_store, config=cfg.memory)
+    except Exception:
+        semantic = None
+    pipeline = MemoryPipeline(
+        mem_store, config=cfg.memory, verifier=verifier, semantic=semantic
+    )
 
     store = SessionStore()
     sid = store.create_session("cli", user_ref="local")

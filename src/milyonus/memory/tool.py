@@ -46,8 +46,23 @@ def make_memory_tools(
         return "quarantined — awaiting verification/approval"
 
     async def search(args: dict[str, Any]) -> str:
-        query = args.get("query", "").casefold()
-        hits = [m for m in pipeline.store.active() if query in m.content.casefold()]
+        query = args.get("query", "").strip()
+        if not query:
+            return "no matching memory"
+        # Prefer trust-weighted semantic recall; fall back to substring when the
+        # embedding layer is off or has nothing indexed yet.
+        sem = getattr(pipeline, "semantic", None)
+        if sem is not None and getattr(sem, "enabled", False):
+            import asyncio
+
+            recalls = await asyncio.to_thread(sem.recall, query)
+            if recalls:
+                return "\n".join(
+                    f"[{r.item.trust_tier}] {r.item.content}  (~{r.score:.2f})"
+                    for r in recalls
+                )
+        q = query.casefold()
+        hits = [m for m in pipeline.store.active() if q in m.content.casefold()]
         if not hits:
             return "no matching memory"
         return "\n".join(f"[{m.trust_tier}] {m.content}" for m in hits[:20])

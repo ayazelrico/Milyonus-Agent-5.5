@@ -38,11 +38,22 @@ class MemoryPipeline:
         *,
         config: MemoryConfig | None = None,
         verifier=None,
+        semantic=None,
     ) -> None:
         self.store = store
         self.config = config or MemoryConfig()
         # RuleBasedVerifier is always the floor; a ModelVerifier can be injected.
         self.verifier = verifier or RuleBasedVerifier()
+        # Optional semantic layer: a promoted memory is embedded for recall.
+        # Indexing failures never block a promotion (recall is best-effort).
+        self.semantic = semantic
+
+    def _index(self, item_id: str) -> None:
+        if self.semantic is None:
+            return
+        item = self.store.get(item_id)
+        if item is not None and item.state == "active":
+            self.semantic.index_item(item)
 
     # --- ingest ---------------------------------------------------------
 
@@ -122,6 +133,7 @@ class MemoryPipeline:
                 confirmations=1,
                 review_at=review_at(tier, time.time(), self.config),
             )
+            self._index(item_id)
             return "active"
         if tier == "T2":
             self.store.mark_active(
@@ -130,6 +142,7 @@ class MemoryPipeline:
                 confirmations=1,
                 review_at=review_at(tier, time.time(), self.config),
             )
+            self._index(item_id)
             return "active"
         if tier == "T3":
             needed = self.config.t3_confirmations_required
@@ -140,6 +153,7 @@ class MemoryPipeline:
                     confirmations=item.confirmations + 1,
                     review_at=review_at(tier, time.time(), self.config),
                 )
+                self._index(item_id)
                 return "active"
             # Not enough confirmations yet: keep pending, set an expiry so an
             # unconfirmed third-party claim does not linger forever.
@@ -164,4 +178,5 @@ class MemoryPipeline:
         if item is None or item.state != "pending":
             return "missing"
         self.store.mark_active(item_id, verdict="user approval", confirmations=item.confirmations)
+        self._index(item_id)
         return "active"

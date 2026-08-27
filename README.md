@@ -11,7 +11,7 @@ it closes the biggest gap in self-evolving agents: *who wrote this memory, and w
 [![License](https://img.shields.io/badge/license-Apache--2.0-1E4FD8.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12%2B-35C6F4.svg)](pyproject.toml)
 [![Version](https://img.shields.io/badge/version-5.5.0-071233.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-235%20passing-22C55E.svg)](tests)
+[![Tests](https://img.shields.io/badge/tests-244%20passing-22C55E.svg)](tests)
 [![PoisonBench](https://img.shields.io/badge/PoisonBench%20ASR-0%25-22C55E.svg)](docs/benchmarks.md)
 
 </div>
@@ -330,6 +330,25 @@ milyonus admin t0 activate <id> --key ~/operator-key.pem                # 2nd si
 Even a full host compromise can *verify* but never *forge* T0. Details:
 [docs/operator.md](docs/operator.md).
 
+**Semantic recall — trust-weighted, never a poison amplifier.**
+
+Durable memory is also indexed as vectors, so the agent recalls by *meaning*, not
+substring: "where does the user live" finds "he's based in Istanbul." The layer is
+pluggable and **dependency-free by default** — a hashing (lexical-vector) embedder
+that needs no model or network — and switches to real embeddings with one config
+line (`embedder = "openai"`).
+
+Crucially, recall ranks by **`cosine × current_trust`, not cosine alone**. A
+semantically perfect match sitting in a decayed or low-trust memory can *never*
+outrank a trusted one, so wording a poisoned line to match the query buys an
+attacker nothing — the trust boundary still leads. Recall is strictly read-only;
+embeddings only index what the pipeline already promoted.
+
+```bash
+milyonus memory search "which editor"   # trust-weighted semantic recall
+milyonus memory reindex                 # (re)build vectors after switching embedder
+```
+
 ---
 
 ## ✦ Skills — procedural memory
@@ -498,7 +517,7 @@ Extend Milyonus through the **skill**, **tool**, or **channel adapter** interfac
 - [x] Integrations: email (IMAP/SMTP), browser (Playwright), vision (image input)
 - [x] Deep web research (keyless search → cited synthesis) + outreach skills
 - [x] Memory as a security boundary: trust decay + signed out-of-band T0
-- [ ] Vector/embedding layer for memory similarity (opt-in)
+- [x] Vector/embedding layer for memory: trust-weighted semantic recall (hashing default, opt-in OpenAI)
 - [ ] Honcho-style cross-session user modelling
 - [ ] Larger PoisonBench corpus + third-party audit
 
