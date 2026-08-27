@@ -101,12 +101,121 @@ The same agent core runs behind **six surfaces**, all default-deny with in-chat 
 
 </div>
 
-Pairing keeps it private:
+### How pairing works (every messaging channel)
+
+Channels are **default-deny**: an unknown user is refused until paired. You
+generate a one-time code and the user redeems it in chat.
 
 ```bash
-milyonus gateway pair telegram        # → a one-time code
-milyonus gateway start                # user sends /pair <code> in chat
+milyonus gateway pair telegram        # → prints an 8-char code (valid 1 hour)
+milyonus gateway start --channel telegram
+# then, in the chat: /pair <code>   →   "pairing successful"
 ```
+
+Codes are crypto-random, expire in 1 hour, rate-limited (1/10 min), and lock out
+after 5 failed attempts. Secrets always live in `~/.milyonus/.env` (chmod 600).
+
+### Connecting each channel
+
+<details>
+<summary><b>✈️ Telegram</b> — Bot API, easiest to set up</summary>
+
+1. In Telegram, message [@BotFather](https://t.me/BotFather) → `/newbot` → get a token.
+2. Add it to your env:
+   ```bash
+   echo 'TELEGRAM_BOT_TOKEN=123456:AA...' >> ~/.milyonus/.env && chmod 600 ~/.milyonus/.env
+   ```
+3. Pair and start:
+   ```bash
+   milyonus gateway pair telegram        # → a code
+   milyonus gateway start --channel telegram
+   ```
+4. Open your bot, press **Start**, send `/pair <code>`, then chat normally.
+</details>
+
+<details>
+<summary><b>💬 WhatsApp</b> — official Cloud API (webhook)</summary>
+
+You need a Meta developer app with WhatsApp added (phone-number id + a permanent token).
+
+1. Put the credentials in `~/.milyonus/.env`:
+   ```bash
+   WHATSAPP_TOKEN=EAAG...                 # Graph API token
+   WHATSAPP_PHONE_NUMBER_ID=1234567890
+   WHATSAPP_VERIFY_TOKEN=some-random-string   # you choose this
+   WHATSAPP_APP_SECRET=...                # optional but recommended (HMAC verify)
+   ```
+2. Start the gateway (it serves the webhook):
+   ```bash
+   milyonus gateway start --channel whatsapp --port 8080
+   ```
+3. Expose the port over HTTPS (reverse proxy, or a tunnel like cloudflared/ngrok
+   for testing) and register that public URL as the webhook in the Meta app,
+   using the same `WHATSAPP_VERIFY_TOKEN`. Subscribe to the **messages** field.
+4. Message the number, then `/pair <code>` (from `milyonus gateway pair whatsapp`).
+
+> The unofficial whatsapp-web.js/Baileys bridge risks account bans and is **not
+> shipped**. Details: [docs/whatsapp.md](docs/whatsapp.md).
+</details>
+
+<details>
+<summary><b>🟣 Slack</b> — Events API (webhook)</summary>
+
+1. Create a Slack app, add a bot token scope, install to the workspace, and copy
+   the **Bot User OAuth Token** and the **Signing Secret**:
+   ```bash
+   SLACK_BOT_TOKEN=xoxb-...
+   SLACK_SIGNING_SECRET=...
+   ```
+2. Start the gateway (serves the webhook):
+   ```bash
+   milyonus gateway start --channel slack --port 8080
+   ```
+3. Expose the port over HTTPS and set the **Event Subscriptions** request URL to
+   `https://your-host/`. Slack sends a one-time challenge (handled automatically),
+   then subscribe to `message.channels` / `message.im` events.
+4. DM the bot (or invite it to a channel), then `/pair <code>`.
+
+> Requests are signature-verified with a 5-minute replay window when
+> `SLACK_SIGNING_SECRET` is set.
+</details>
+
+<details>
+<summary><b>🎮 Discord</b> — Gateway (WebSocket)</summary>
+
+1. Install the optional dependency:
+   ```bash
+   pip install milyonus-agent[discord]
+   ```
+2. Create a Discord application → **Bot** → copy the token. Under **Privileged
+   Gateway Intents**, enable **MESSAGE CONTENT INTENT**.
+   ```bash
+   echo 'DISCORD_BOT_TOKEN=...' >> ~/.milyonus/.env
+   ```
+3. Invite the bot to your server (OAuth2 URL with the `bot` scope).
+4. Start it and pair:
+   ```bash
+   milyonus gateway start --channel discord
+   # in Discord: /pair <code>
+   ```
+</details>
+
+<details>
+<summary><b>📝 Editor (ACP)</b> — Zed and other ACP editors</summary>
+
+Point your editor's ACP agent config at the `milyonus acp` command:
+
+```
+command: milyonus
+args: ["acp"]
+```
+
+Milyonus then serves newline-delimited JSON-RPC on stdio (initialize / session.new
+/ session.prompt with streaming). Your provider key is read from `~/.milyonus/.env`
+as usual. Details: [docs/acp.md](docs/acp.md).
+</details>
+
+Full production hardening: [docs/production.md](docs/production.md).
 
 ---
 
