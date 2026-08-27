@@ -1,6 +1,6 @@
 ---
 name: systemd-services
-description: systemd ile servis yönetimi ve loglar
+description: Manage services and logs with systemd
 version: 1.0.0
 platforms:
 - linux
@@ -9,16 +9,16 @@ metadata:
     tags:
     - systemd
     - service
-    category: sistem
+    category: system
     requires_toolsets:
     - terminal
     provenance: official
 ---
 
 # systemd
-- **Durum:** `systemctl status servis`
-- **Başlat/durdur:** `systemctl start|stop|restart servis`
-- **Açılışta:** `systemctl enable --now servis`
-- **Log:** `journalctl -u servis -f` (canlı), `-n 100` son 100 satır
-- **Birim düzenle:** `/etc/systemd/system/ad.service` ; sonra `systemctl daemon-reload`
-- **Kullanıcı servisi:** `systemctl --user ...`
+- **Status:** `systemctl status service`
+- **Start/stop:** `systemctl start|stop|restart service`
+- **On boot:** `systemctl enable --now service`
+- **Logs:** `journalctl -u service -f` (live), `-n 100` last 100 lines
+- **Edit unit:** `/etc/systemd/system/name.service` ; then `systemctl daemon-reload`
+- **User service:** `systemctl --user ...`

@@ -1,6 +1,6 @@
 ---
 name: ripgrep-search
-description: ripgrep (rg) ile hızlı kod/metin arama
+description: Fast code/text search with ripgrep (rg)
 version: 1.0.0
 platforms:
 - macos
@@ -11,16 +11,16 @@ metadata:
     - search
     - grep
     - rg
-    category: gelistirme
+    category: development
     requires_toolsets:
     - terminal
     provenance: official
 ---
 
 # ripgrep (rg)
-- **Ara:** `rg "desen"` (özyinelemeli, .gitignore'a saygılı)
-- **Dosya türü:** `rg "TODO" -t py`
-- **Bağlam:** `rg -C 3 "hata"` (3 satır önce/sonra)
-- **Sadece dosya adı:** `rg -l "import x"`
-- **Değiştir (önizleme):** `rg "eski" -l | xargs sed -n 's/eski/yeni/gp'`
-- **Gizli dosyalar:** `rg --hidden --no-ignore "desen"`
+- **Search:** `rg "pattern"` (recursive, respects .gitignore)
+- **File type:** `rg "TODO" -t py`
+- **Context:** `rg -C 3 "error"` (3 lines before/after)
+- **File names only:** `rg -l "import x"`
+- **Preview replace:** `rg "old" -l | xargs sed -n 's/old/new/gp'`
+- **Hidden files:** `rg --hidden --no-ignore "pattern"`

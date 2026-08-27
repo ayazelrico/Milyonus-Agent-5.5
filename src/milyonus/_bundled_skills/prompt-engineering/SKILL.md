@@ -1,6 +1,6 @@
 ---
 name: prompt-engineering
-description: LLM promptlarını ve uygulamalarını tasarlama
+description: Design LLM prompts and applications
 version: 1.0.0
 platforms:
 - macos
@@ -11,32 +11,26 @@ metadata:
     - prompt
     - llm
     - ai
-    category: yapay-zeka
+    category: ai
     requires_toolsets: []
     provenance: official
 ---
 
-# Prompt Mühendisliği
-
-## Temel yapı
-- **System:** rol, kurallar, çıktı biçimi, kısıtlar (kalıcı davranış).
-- **User:** somut görev + gerekli bağlam.
-- **Örnekler (few-shot):** 1–5 iyi örnek, formatı gösterir; sıfır-shot yetmezse ekle.
-
-## Etkili teknikler
-- **Açık çıktı sözleşmesi:** "Yalnızca JSON döndür: {...}". Şema ver, doğrula.
-- **Adım adım düşünme:** karmaşık akıl yürütmede "önce planla, sonra çöz" iste
-  (ama kısa/kesin cevaplarda gereksiz uzatmayı önle).
-- **Sınırları belirt:** "Bilmiyorsan 'bilmiyorum' de", "uydurma".
-- **Rol + kitle:** "Kıdemli güvenlik mühendisi gibi, junior'a açıkla".
-- **Böl ve yönet:** tek dev prompt yerine zincir (extract → transform → format).
-
-## Sık hatalar
-- Belirsiz talimat → belirsiz çıktı. Somut ol, örnek ver.
-- Çelişen kurallar; öncelik sırası belirt.
-- Bağlamı gömerken "talimat" ile "veri"yi karıştırmak — veriyi açıkça fence'le
-  (Milyonus bunu `<milyonus:memory>` ile yapar).
-
-## Değerlendirme
-- Bir test seti (girdi → beklenen) tut; prompt değişince regresyonu ölç.
-- LLM-as-judge ile sübjektif kaliteyi puanla; sıcaklığı 0'a çek (tekrarlanabilirlik).
+# Prompt Engineering
+## Basic structure
+- **System:** role, rules, output format, constraints (persistent behavior).
+- **User:** the concrete task + needed context.
+- **Examples (few-shot):** 1–5 good examples show the format; add when zero-shot is not enough.
+## Effective techniques
+- **Explicit output contract:** "Return only JSON: {...}". Give a schema, validate.
+- **Step-by-step reasoning:** ask to "plan first, then solve" for complex reasoning (avoid needless verbosity on short/precise answers).
+- **State limits:** "If you don't know, say 'I don't know'", "don't make things up".
+- **Role + audience:** "As a senior security engineer, explain to a junior".
+- **Divide and conquer:** a chain (extract -> transform -> format) beats one giant prompt.
+## Common mistakes
+- Vague instruction -> vague output. Be concrete, give examples.
+- Conflicting rules; state a priority order.
+- Confusing "instruction" and "data" when embedding context — fence data explicitly (Milyonus does this with `<milyonus:memory>`).
+## Evaluation
+- Keep a test set (input -> expected); measure regressions when the prompt changes.
+- Score subjective quality with an LLM-as-judge; set temperature to 0 (reproducibility).

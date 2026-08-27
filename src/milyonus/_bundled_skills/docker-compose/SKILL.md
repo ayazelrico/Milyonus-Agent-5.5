@@ -1,6 +1,6 @@
 ---
 name: docker-compose
-description: Docker Compose ile çok servisli uygulama yönetimi
+description: Manage multi-service apps with Docker Compose
 version: 1.0.0
 platforms:
 - macos
@@ -17,9 +17,9 @@ metadata:
 ---
 
 # Docker Compose
-- **Başlat:** `docker compose up -d` (arka planda)
-- **Durum/log:** `docker compose ps`, `docker compose logs -f <servis>`
-- **Yeniden build:** `docker compose up -d --build`
-- **Durdur/temizle:** `docker compose down` (+`-v` volume'ları da siler)
-- **Tek servis:** `docker compose restart <servis>`
-- compose.yaml'da `depends_on`, `env_file`, `volumes`, `healthcheck` anahtarlarını kullan
+- **Start:** `docker compose up -d` (detached)
+- **Status/logs:** `docker compose ps`, `docker compose logs -f <service>`
+- **Rebuild:** `docker compose up -d --build`
+- **Stop/clean:** `docker compose down` (+`-v` also removes volumes)
+- **Single service:** `docker compose restart <service>`
+- In compose.yaml use `depends_on`, `env_file`, `volumes`, `healthcheck`

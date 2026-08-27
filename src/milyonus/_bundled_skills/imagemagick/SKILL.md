@@ -1,6 +1,6 @@
 ---
 name: imagemagick
-description: ImageMagick ile toplu görüntü işleme
+description: Batch image processing with ImageMagick
 version: 1.0.0
 platforms:
 - macos
@@ -10,16 +10,16 @@ metadata:
     tags:
     - image
     - magick
-    category: medya
+    category: media
     requires_toolsets:
     - terminal
     provenance: official
 ---
 
 # ImageMagick
-- **Dönüştür:** `magick girdi.png cikti.jpg`
-- **Boyutlandır:** `magick x.png -resize 800x600 y.png`
-- **Toplu:** `for f in *.png; do magick "$f" -resize 50% "kucuk_$f"; done`
-- **Kırp:** `magick x.png -crop 200x200+10+10 y.png`
-- **Bilgi:** `magick identify x.png`
-- **Kalite:** `magick x.png -quality 82 y.jpg`
+- **Convert:** `magick input.png output.jpg`
+- **Resize:** `magick x.png -resize 800x600 y.png`
+- **Batch:** `for f in *.png; do magick "$f" -resize 50% "small_$f"; done`
+- **Crop:** `magick x.png -crop 200x200+10+10 y.png`
+- **Info:** `magick identify x.png`
+- **Quality:** `magick x.png -quality 82 y.jpg`

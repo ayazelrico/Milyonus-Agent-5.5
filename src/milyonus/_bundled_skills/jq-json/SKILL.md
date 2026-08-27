@@ -1,6 +1,6 @@
 ---
 name: jq-json
-description: jq ile JSON sorgulama ve dönüştürme
+description: Query and transform JSON with jq
 version: 1.0.0
 platforms:
 - macos
@@ -10,16 +10,16 @@ metadata:
     tags:
     - json
     - jq
-    category: veri
+    category: data
     requires_toolsets:
     - terminal
     provenance: official
 ---
 
-# jq ile JSON
-- **Güzel yazdır:** `jq . dosya.json`
-- **Alan seç:** `jq '.data.name'` ; dizi `jq '.items[]'`
-- **Filtre:** `jq '.items[] | select(.active==true)'`
-- **Dönüştür:** `jq '.items | map({id, name})'`
-- **Say:** `jq '.items | length'`
-- **Ham çıktı:** `jq -r '.url'` (tırnaksız)
+# jq for JSON
+- **Pretty-print:** `jq . file.json`
+- **Select field:** `jq '.data.name'` ; array `jq '.items[]'`
+- **Filter:** `jq '.items[] | select(.active==true)'`
+- **Transform:** `jq '.items | map({id, name})'`
+- **Count:** `jq '.items | length'`
+- **Raw output:** `jq -r '.url'` (unquoted)

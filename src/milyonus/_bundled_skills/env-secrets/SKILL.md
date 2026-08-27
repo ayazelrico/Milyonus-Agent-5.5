@@ -1,6 +1,6 @@
 ---
 name: env-secrets
-description: Ortam değişkenleri ve gizli anahtarları güvenli yönetme
+description: Manage environment variables and secrets safely
 version: 1.0.0
 platforms:
 - macos
@@ -10,16 +10,16 @@ metadata:
     tags:
     - env
     - secret
-    category: guvenlik
+    category: security
     requires_toolsets:
     - terminal
     provenance: official
 ---
 
-# Ortam Değişkenleri & Secret'lar
-- **Ayarla:** `export API_URL=https://...` (oturumluk)
-- **.env dosyası:** `KEY=deger` satırları; koda commit etme, `.gitignore`'a ekle
-- **İzin:** secret dosyalarını `chmod 600` yap
-- **Yükle (shell):** `set -a; . ./.env; set +a`
-- **Asla:** anahtarları koda gömme, log'a yazma, URL query'sine koyma
-- **Döndür:** sızıntı şüphesinde anahtarı hemen iptal edip yenile
+# Environment Variables & Secrets
+- **Set:** `export API_URL=https://...` (session only)
+- **.env file:** `KEY=value` lines; never commit, add to `.gitignore`
+- **Perms:** `chmod 600` secret files
+- **Load (shell):** `set -a; . ./.env; set +a`
+- **Never:** hardcode keys, log them, or put them in URL query strings
+- **Rotate:** on suspected leak, revoke and regenerate immediately

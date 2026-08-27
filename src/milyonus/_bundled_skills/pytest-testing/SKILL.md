@@ -1,6 +1,6 @@
 ---
 name: pytest-testing
-description: pytest ile test yazma ve çalıştırma
+description: Write and run tests with pytest
 version: 1.0.0
 platforms:
 - macos
@@ -11,16 +11,16 @@ metadata:
     - python
     - test
     - pytest
-    category: gelistirme
+    category: development
     requires_toolsets:
     - terminal
     provenance: official
 ---
 
 # pytest
-- **Çalıştır:** `pytest -q` ; tek dosya `pytest tests/test_x.py`
-- **Seç:** `pytest -k "isim ifadesi"`
-- **İlk hatada dur:** `pytest -x` ; ayrıntı `pytest -vv`
-- **Kapsam:** `pytest --cov=paket`
-- **Fixture** ile kurulum paylaş; `@pytest.mark.parametrize` ile çok senaryo
+- **Run:** `pytest -q` ; single file `pytest tests/test_x.py`
+- **Select:** `pytest -k "name expression"`
+- **Stop on first fail:** `pytest -x` ; verbose `pytest -vv`
+- **Coverage:** `pytest --cov=package`
+- Share setup with **fixtures**; many cases with `@pytest.mark.parametrize`
 - **Async:** `pytest-asyncio` + `@pytest.mark.asyncio`

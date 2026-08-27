@@ -39,7 +39,7 @@ def test_parse_and_render_roundtrip(tmp_path):
 def test_bundled_skill_discovered():
     eng = SkillEngine()
     names = [s["name"] for s in eng.list_level0()]
-    assert "pdf-tablo-cikarma" in names
+    assert "pdf-extract" in names
 
 
 def test_progressive_disclosure(tmp_path):

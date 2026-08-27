@@ -1,6 +1,6 @@
 ---
 name: aws-cli
-description: AWS CLI ile bulut kaynaklarını yönetme (S3, EC2, IAM, logs)
+description: Manage cloud resources with the AWS CLI (S3, EC2, IAM, logs)
 version: 1.0.0
 platforms:
 - macos
@@ -18,31 +18,27 @@ metadata:
 ---
 
 # AWS CLI
-
-## Kurulum & kimlik
+## Setup & identity
 ```bash
-aws configure                 # anahtar, bölge, çıktı formatı
-aws sts get-caller-identity   # kim olduğunu doğrula
-export AWS_PROFILE=prod       # profil değiştir
+aws configure                 # key, region, output format
+aws sts get-caller-identity   # verify who you are
+export AWS_PROFILE=prod       # switch profile
 ```
-
 ## S3
 ```bash
-aws s3 ls                             # bucket'ları listele
-aws s3 cp dosya.txt s3://bucket/yol/  # yükle
-aws s3 sync ./dir s3://bucket/dir     # senkron
-aws s3 presign s3://bucket/key --expires-in 3600   # geçici link
+aws s3 ls
+aws s3 cp file.txt s3://bucket/path/
+aws s3 sync ./dir s3://bucket/dir
+aws s3 presign s3://bucket/key --expires-in 3600
 ```
-
-## EC2 / genel
+## EC2 / general
 ```bash
 aws ec2 describe-instances --query "Reservations[].Instances[].[InstanceId,State.Name]" --output table
-aws logs tail /aws/lambda/fn --follow      # CloudWatch log akışı
+aws logs tail /aws/lambda/fn --follow
 aws ecr get-login-password | docker login --username AWS --password-stdin <acct>.dkr.ecr.<region>.amazonaws.com
 ```
-
-## İpuçları
-- `--query` (JMESPath) ile çıktıyı süz; `--output table|json|text`.
-- `--dry-run` destekleyen komutlarda önce dene.
-- Kimlik bilgisini asla koda gömme; IAM rol + en az ayrıcalık kullan.
-- `aws configure sso` ile kısa ömürlü kimlik (kalıcı anahtardan iyidir).
+## Tips
+- Filter output with `--query` (JMESPath); `--output table|json|text`.
+- Try `--dry-run` where supported first.
+- Never hardcode credentials; use IAM roles + least privilege.
+- Prefer `aws configure sso` (short-lived credentials) over long-lived keys.

@@ -1,6 +1,6 @@
 ---
 name: github-cli
-description: GitHub CLI (gh) ile PR, issue ve repo yönetimi
+description: Manage PRs, issues and repos with the GitHub CLI (gh)
 version: 1.0.0
 platforms:
 - macos
@@ -18,9 +18,9 @@ metadata:
 ---
 
 # GitHub CLI (gh)
-- **Kimlik:** `gh auth status` (giriş: `gh auth login`)
-- **PR aç:** `gh pr create --fill` (mevcut dal → hedef); taslak `--draft`
-- **PR gözden geçir:** `gh pr view`, `gh pr diff`, `gh pr checks`
-- **Issue:** `gh issue list --state open`, `gh issue create --title ... --body ...`
-- **Repo klonla:** `gh repo clone owner/repo`
-- **CI durumu:** `gh run list`, `gh run watch`
+- **Auth:** `gh auth status` (login: `gh auth login`)
+- **Open a PR:** `gh pr create --fill` (current branch -> target); draft `--draft`
+- **Review a PR:** `gh pr view`, `gh pr diff`, `gh pr checks`
+- **Issues:** `gh issue list --state open`, `gh issue create --title ... --body ...`
+- **Clone:** `gh repo clone owner/repo`
+- **CI status:** `gh run list`, `gh run watch`

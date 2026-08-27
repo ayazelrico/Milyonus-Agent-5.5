@@ -1,6 +1,6 @@
 ---
 name: bash-scripting
-description: Güvenli bash betik yazımı için desenler
+description: Patterns for safe bash scripting
 version: 1.0.0
 platforms:
 - macos
@@ -11,17 +11,17 @@ metadata:
     - bash
     - shell
     - script
-    category: gelistirme
+    category: development
     requires_toolsets:
     - terminal
     provenance: official
 ---
 
-# Bash Betik Yazımı
-- **Katı mod:** betik başına `set -euo pipefail`
-- **Değişken:** `"$degisken"` her zaman tırnak içinde
-- **Koşul:** `if [ -f dosya ]; then ...; fi`
-- **Döngü:** `for f in *.txt; do echo "$f"; done`
-- **Fonksiyon:** `topla() { echo $(( $1 + $2 )); }`
-- **Argüman:** `$1`, `$@`, sayısı `$#`
-- **Hata yakala:** `trap 'echo hata satır $LINENO' ERR`
+# Bash Scripting
+- **Strict mode:** `set -euo pipefail` at the top
+- **Variables:** always quote `"$var"`
+- **Condition:** `if [ -f file ]; then ...; fi`
+- **Loop:** `for f in *.txt; do echo "$f"; done`
+- **Function:** `add() { echo $(( $1 + $2 )); }`
+- **Args:** `$1`, `$@`, count `$#`
+- **Trap errors:** `trap 'echo error at line $LINENO' ERR`

@@ -1,6 +1,6 @@
 ---
 name: github-actions
-description: GitHub Actions ile CI/CD workflow tasarımı (build, test, deploy)
+description: Design CI/CD workflows with GitHub Actions (build, test, deploy)
 version: 1.0.0
 platforms:
 - macos
@@ -19,10 +19,8 @@ metadata:
 ---
 
 # GitHub Actions
-
-Workflow dosyaları `.github/workflows/*.yml` içinde durur.
-
-## İskelet
+Workflow files live in `.github/workflows/*.yml`.
+## Skeleton
 ```yaml
 name: CI
 on:
@@ -38,18 +36,15 @@ jobs:
       - run: pip install -e .[dev]
       - run: pytest -q
 ```
-
-## Önemli desenler
-- **Tetikleyiciler:** `push`, `pull_request`, `workflow_dispatch` (manuel), `schedule` (cron), `release`.
-- **Matrix:** birden çok sürüm/OS'te koş:
-  `strategy: { matrix: { python: ["3.11","3.12"] } }` → `${{ matrix.python }}`.
-- **Cache:** `actions/cache@v4` ile bağımlılıkları hızlandır.
-- **Secrets:** `${{ secrets.NAME }}` (Settings → Secrets'tan tanımla; loga yazma).
-- **Koşul:** `if: github.ref == 'refs/heads/main'`.
-- **İşler arası bağımlılık:** `needs: [test]`.
-- **Artifact:** `actions/upload-artifact@v4` ile build çıktısı paylaş.
-
-## İpuçları
-- İş başına en az ayrıcalık; `permissions:` bloğuyla token kapsamını daralt.
-- Üçüncü taraf action'ları SHA ile pinle (tedarik zinciri güvenliği).
-- `concurrency:` ile eski koşuları iptal et.
+## Key patterns
+- **Triggers:** `push`, `pull_request`, `workflow_dispatch` (manual), `schedule` (cron), `release`.
+- **Matrix:** run across versions/OSes: `strategy: { matrix: { python: ["3.11","3.12"] } }` -> `${{ matrix.python }}`.
+- **Cache:** speed up deps with `actions/cache@v4`.
+- **Secrets:** `${{ secrets.NAME }}` (define under Settings -> Secrets; never log).
+- **Condition:** `if: github.ref == 'refs/heads/main'`.
+- **Job deps:** `needs: [test]`.
+- **Artifacts:** share build output with `actions/upload-artifact@v4`.
+## Tips
+- Least privilege per job; narrow the token with a `permissions:` block.
+- Pin third-party actions by SHA (supply-chain safety).
+- Cancel stale runs with `concurrency:`.

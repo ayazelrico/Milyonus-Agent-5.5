@@ -1,6 +1,6 @@
 ---
 name: postgres-psql
-description: psql ile PostgreSQL yönetimi ve sorgulama
+description: Administer and query PostgreSQL with psql
 version: 1.0.0
 platforms:
 - macos
@@ -11,16 +11,16 @@ metadata:
     - postgres
     - sql
     - psql
-    category: veri
+    category: data
     requires_toolsets:
     - terminal
     provenance: official
 ---
 
 # PostgreSQL (psql)
-- **Bağlan:** `psql "postgres://kullanici@host:5432/db"`
-- **Meta:** `\dt` (tablolar), `\d tablo` (şema), `\l` (veritabanları)
-- **Sorgu:** normal SQL; çok satır `;` ile biter
-- **Çıktı dosyası:** `\o cikti.txt`
-- **Zaman ölç:** `\timing on`
-- **CSV dışa aktar:** `\copy (SELECT ...) TO 'x.csv' CSV HEADER`
+- **Connect:** `psql "postgres://user@host:5432/db"`
+- **Meta:** `\dt` (tables), `\d table` (schema), `\l` (databases)
+- **Query:** plain SQL; multi-line ends with `;`
+- **Output to file:** `\o out.txt`
+- **Time queries:** `\timing on`
+- **CSV export:** `\copy (SELECT ...) TO 'x.csv' CSV HEADER`

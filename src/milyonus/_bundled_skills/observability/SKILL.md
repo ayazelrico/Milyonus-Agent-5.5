@@ -1,6 +1,6 @@
 ---
 name: observability
-description: Yapısal log, metrik ve tracing ile gözlemlenebilirlik
+description: Observability with structured logs, metrics and tracing
 version: 1.0.0
 platforms:
 - macos
@@ -12,40 +12,33 @@ metadata:
     - metrics
     - tracing
     - observability
-    category: sistem
+    category: system
     requires_toolsets: []
     provenance: official
 ---
 
-# Observability (Loglar · Metrikler · Tracing)
-
-Üç sütun: **loglar** (ne oldu), **metrikler** (ne kadar), **trace** (nerede/ne kadar sürdü).
-
-## Yapısal loglama
-- Düz metin değil **JSON** logla: `{"level","ts","msg","request_id","user",...}`.
-- Her isteğe bir **correlation/request id** ekle; servisler arası taşı.
-- Seviyeleri doğru kullan: DEBUG/INFO/WARN/ERROR. Secret'ları redakte et.
+# Observability (Logs · Metrics · Tracing)
+Three pillars: **logs** (what happened), **metrics** (how much), **traces** (where/how long).
+## Structured logging
+- Log **JSON**, not plain text: `{"level","ts","msg","request_id","user",...}`.
+- Add a **correlation/request id** to each request; carry it across services.
+- Use levels correctly: DEBUG/INFO/WARN/ERROR. Redact secrets.
 ```python
 import logging, json
-
-logging.info(json.dumps({"event": "login", "user_id": 42, "ms": 83}))
+logging.info(json.dumps({"event":"login","user_id":42,"ms":83}))
 ```
-
-## Metrikler (ne izlenir)
-- **RED** (servisler): Rate (istek/s), Errors (hata oranı), Duration (gecikme p50/p95/p99).
-- **USE** (kaynaklar): Utilization, Saturation, Errors (CPU/bellek/disk).
-- Prometheus + Grafana yaygın; sayaç/histogram export et.
-
+## Metrics (what to watch)
+- **RED** (services): Rate (req/s), Errors (error rate), Duration (latency p50/p95/p99).
+- **USE** (resources): Utilization, Saturation, Errors (CPU/memory/disk).
+- Prometheus + Grafana are common; export counters/histograms.
 ## Tracing
-- Bir isteğin servisler arası yolculuğunu span'lerle izle (OpenTelemetry).
-- Yavaş uçları bulmak için span sürelerine bak.
-
-## Log analizi (hızlı)
+- Follow a request across services with spans (OpenTelemetry).
+- Look at span durations to find slow hops.
+## Quick log analysis
 ```bash
 grep -E "ERROR|Exception" app.log | tail -50
 jq 'select(.level=="ERROR")' app.jsonl | jq -s 'length'
-awk '{print $1}' access.log | sort | uniq -c | sort -rn | head   # en çok IP
+awk '{print $1}' access.log | sort | uniq -c | sort -rn | head   # top IPs
 ```
-
-> Milyonus'un kendi eval katmanı bu felsefeyi izler: her koşumda token, süre,
-> maliyet, tool hatası ve human intervention izlenir (`milyonus eval run`).
+> Milyonus's own eval layer follows this philosophy: every run tracks tokens,
+> time, cost, tool errors and human interventions (`milyonus eval run`).

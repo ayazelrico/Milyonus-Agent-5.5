@@ -1,6 +1,6 @@
 ---
 name: rag-retrieval
-description: Retrieval-Augmented Generation sistemi kurma (chunk, embed, ara)
+description: Build a Retrieval-Augmented Generation system (chunk, embed, search)
 version: 1.0.0
 platforms:
 - macos
@@ -13,32 +13,24 @@ metadata:
     - vector
     - llm
     - retrieval
-    category: yapay-zeka
+    category: ai
     requires_toolsets: []
     provenance: official
 ---
 
 # RAG (Retrieval-Augmented Generation)
-
-Amaç: LLM'e cevap üretirken ilgili kaynak metni bağlama enjekte etmek —
-halüsinasyonu azaltır, güncel/özel bilgi sağlar.
-
-## Boru hattı
-1. **Yükle & parçala (chunk):** belgeleri ~300–800 token'lık, %10–20 örtüşen
-   parçalara böl. Anlamsal sınırları koru (paragraf/başlık).
-2. **Gömme (embed):** her parçayı bir embedding modeliyle vektöre çevir
-   (ör. OpenAI `text-embedding-3-small`, yerel `bge`/`e5`).
-3. **Sakla:** vektörleri bir vektör deposuna yaz (sqlite-vec, FAISS, pgvector,
-   Qdrant). Metadatayı (kaynak, başlık) birlikte tut.
-4. **Getir:** sorguyu göm → en yakın k parçayı bul (kosinüs). Tipik k=4–8.
-5. **Yeniden sırala (ops.):** bir cross-encoder ile ilk k'yi rerank et.
-6. **Üret:** getirilen parçaları promta **kaynak olarak** ver; modele
-   "yalnızca verilen bağlama dayan, yoksa bilmiyorum de" talimatı ver.
-
-## Kalite ipuçları
-- **Chunk boyutu** en kritik parametre: çok büyük → gürültü, çok küçük → bağlam kopar.
-- **Hibrit arama:** vektör + anahtar kelime (BM25) birleştir; kesin terimlerde iyidir.
-- **Kaynak göster:** cevapta hangi parçadan geldiğini belirt (güven + denetim).
-- **Değerlendir:** soru-cevap seti üzerinde "getirme isabeti" ve "cevap doğruluğu"nu ölç.
-- Milyonus'ta gömme katmanı opsiyoneldir (`sqlite-vec`); benzerlik dedup/negatif
-  bellek için de kullanılır.
+Goal: inject relevant source text into the LLM's context when generating —
+reduces hallucination, supplies fresh/private knowledge.
+## Pipeline
+1. **Load & chunk:** split documents into ~300–800 token chunks with 10–20% overlap. Preserve semantic boundaries (paragraph/heading).
+2. **Embed:** turn each chunk into a vector with an embedding model (e.g. OpenAI `text-embedding-3-small`, local `bge`/`e5`).
+3. **Store:** write vectors to a vector store (sqlite-vec, FAISS, pgvector, Qdrant). Keep metadata (source, title) alongside.
+4. **Retrieve:** embed the query -> find the nearest k chunks (cosine). Typical k=4–8.
+5. **Rerank (optional):** rerank the top-k with a cross-encoder.
+6. **Generate:** pass the retrieved chunks to the prompt **as sources**; instruct the model to "answer only from the given context, else say you don't know".
+## Quality tips
+- **Chunk size** is the most critical knob: too large -> noise, too small -> broken context.
+- **Hybrid search:** combine vector + keyword (BM25); good for exact terms.
+- **Cite sources:** state which chunk an answer came from (trust + auditability).
+- **Evaluate:** measure "retrieval hit rate" and "answer correctness" over a QA set.
+- In Milyonus the embedding layer is optional (`sqlite-vec`); it is also used for dedup / negative-memory similarity.

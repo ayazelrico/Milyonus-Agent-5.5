@@ -1,6 +1,6 @@
 ---
 name: docker-basics
-description: Docker imaj ve konteyner temel işlemleri
+description: Core Docker image and container operations
 version: 1.0.0
 platforms:
 - macos
@@ -16,11 +16,11 @@ metadata:
     provenance: official
 ---
 
-# Docker Temelleri
-- **İmajlar:** `docker images`, çek `docker pull nginx:alpine`
-- **Çalıştır:** `docker run --rm -it -p 8080:80 nginx:alpine`
-- **Konteynerler:** `docker ps -a`, durdur `docker stop <id>`
-- **Loglar:** `docker logs -f <id>`
-- **İçine gir:** `docker exec -it <id> sh`
-- **Temizlik:** `docker system df`, kullanılmayanları temizle `docker image prune`
-- **Build:** `docker build -t ad:etiket .`
+# Docker Basics
+- **Images:** `docker images`, pull `docker pull nginx:alpine`
+- **Run:** `docker run --rm -it -p 8080:80 nginx:alpine`
+- **Containers:** `docker ps -a`, stop `docker stop <id>`
+- **Logs:** `docker logs -f <id>`
+- **Exec in:** `docker exec -it <id> sh`
+- **Cleanup:** `docker system df`, prune unused `docker image prune`
+- **Build:** `docker build -t name:tag .`

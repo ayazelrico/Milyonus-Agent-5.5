@@ -1,6 +1,6 @@
 ---
 name: csv-data
-description: Komut satırı araçlarıyla CSV işleme (csvkit, awk)
+description: Process CSV from the command line (csvkit, awk)
 version: 1.0.0
 platforms:
 - macos
@@ -11,16 +11,16 @@ metadata:
     - csv
     - awk
     - data
-    category: veri
+    category: data
     requires_toolsets:
     - terminal
     provenance: official
 ---
 
-# CSV İşleme
-- **Önizle:** `head -5 veri.csv` ; sütunlar `head -1 veri.csv | tr ',' '\n'`
-- **csvkit:** `csvlook veri.csv`, `csvstat veri.csv`, `csvcut -c 1,3 veri.csv`
-- **Filtre (csvkit):** `csvgrep -c durum -m aktif veri.csv`
-- **awk sütun:** `awk -F, '{print $2}' veri.csv`
-- **SQL:** `csvsql --query "SELECT ..." veri.csv`
-- **JSON'a:** `csvjson veri.csv`
+# CSV Processing
+- **Preview:** `head -5 data.csv` ; columns `head -1 data.csv | tr ',' '\n'`
+- **csvkit:** `csvlook data.csv`, `csvstat data.csv`, `csvcut -c 1,3 data.csv`
+- **Filter (csvkit):** `csvgrep -c status -m active data.csv`
+- **awk column:** `awk -F, '{print $2}' data.csv`
+- **SQL:** `csvsql --query "SELECT ..." data.csv`
+- **To JSON:** `csvjson data.csv`

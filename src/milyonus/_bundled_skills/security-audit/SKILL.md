@@ -1,6 +1,6 @@
 ---
 name: security-audit
-description: Bağımlılık, secret ve kod güvenliği denetimi
+description: Audit dependencies, secrets and code security
 version: 1.0.0
 platforms:
 - macos
@@ -12,40 +12,36 @@ metadata:
     - audit
     - vulnerability
     - sast
-    category: guvenlik
+    category: security
     requires_toolsets:
     - terminal
     provenance: official
 ---
 
-# Güvenlik Denetimi
-
-## Bağımlılık zafiyetleri
+# Security Audit
+## Dependency vulnerabilities
 ```bash
-pip-audit                     # Python (PyPI danışmanlıkları)
+pip-audit                     # Python (PyPI advisories)
 npm audit --production        # Node
-osv-scanner -r .              # çok dilli (Google OSV)
-trivy fs .                    # dosya sistemi + imaj taraması
+osv-scanner -r .              # multi-language (Google OSV)
+trivy fs .                    # filesystem + image scan
 ```
-
-## Secret sızıntısı
+## Secret leakage
 ```bash
-gitleaks detect --source .    # commit geçmişinde anahtar ara
-trufflehog filesystem .       # doğrulanmış secret'lar
+gitleaks detect --source .    # search commit history for keys
+trufflehog filesystem .       # verified secrets
 ```
-- Bulursan: anahtarı **hemen iptal et/yenile**, sonra geçmişten temizle (BFG/filter-repo).
-
-## Statik analiz (SAST)
+- If found: **revoke/rotate** the key immediately, then purge from history (BFG/filter-repo).
+## Static analysis (SAST)
 ```bash
-bandit -r src/                # Python güvenlik lint'i
-semgrep --config auto .       # kural tabanlı, çok dilli
-ruff check --select S         # bandit kurallarının bir kısmı
+bandit -r src/                # Python security linter
+semgrep --config auto .       # rule-based, multi-language
+ruff check --select S         # a subset of bandit rules
 ```
-
-## Kontrol listesi (kod incelemesinde)
-- Girdi doğrulama; SQL için parametreli sorgu (injection yok).
-- Komut çalıştırmada shell=True + kullanıcı girdisi = tehlike.
-- SSRF: dış URL'leri özel ağlara karşı doğrula (Milyonus fail-closed yapar).
-- Secret'lar env/gizli kasa'da, kodda değil; loglarda redakte.
-- En az ayrıcalık; kimlik bilgisi rotasyonu.
-- Bağımlılıkları pinle + düzenli güncelle.
+## Checklist (during code review)
+- Input validation; parameterized queries for SQL (no injection).
+- shell=True + user input in command execution = danger.
+- SSRF: validate outbound URLs against private networks (Milyonus is fail-closed).
+- Secrets in env/vault, not in code; redacted in logs.
+- Least privilege; credential rotation.
+- Pin dependencies + update regularly.

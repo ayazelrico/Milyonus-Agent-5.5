@@ -1,6 +1,6 @@
 ---
 name: git-workflow
-description: Git ile dallanma, commit, rebase ve çakışma çözme iş akışı
+description: Git branching, commit, rebase and conflict-resolution workflow
 version: 1.0.0
 platforms:
 - macos
@@ -16,11 +16,11 @@ metadata:
     provenance: official
 ---
 
-# Git İş Akışı
-- **Durum:** `git status`, `git diff`, `git log --oneline --graph`
-- **Dal:** `git switch -c ozellik/x` ; ana dala dön `git switch main`
-- **Commit:** küçük ve anlamlı tut; `git add -p` ile parça parça sahnele
-- **Güncel tut:** `git fetch` sonra `git rebase origin/main` (lineer geçmiş)
-- **Çakışma:** dosyayı düzelt → `git add <dosya>` → `git rebase --continue`
-- **Geri al:** son commit'i düzenle `git commit --amend`; değişikliği geri al `git revert <sha>`
-- **Stash:** `git stash push -m "mesaj"`, geri getir `git stash pop`
+# Git Workflow
+- **Status:** `git status`, `git diff`, `git log --oneline --graph`
+- **Branch:** `git switch -c feature/x` ; back to main `git switch main`
+- **Commit:** keep small and meaningful; stage in pieces `git add -p`
+- **Stay current:** `git fetch` then `git rebase origin/main` (linear history)
+- **Conflict:** fix the file -> `git add <file>` -> `git rebase --continue`
+- **Undo:** amend last commit `git commit --amend`; revert a change `git revert <sha>`
+- **Stash:** `git stash push -m "msg"`, restore `git stash pop`

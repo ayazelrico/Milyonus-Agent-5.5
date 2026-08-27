@@ -1,6 +1,6 @@
 ---
 name: kubernetes-kubectl
-description: kubectl ile Kubernetes kaynaklarını inceleme ve yönetme
+description: Inspect and manage Kubernetes resources with kubectl
 version: 1.0.0
 platforms:
 - macos
@@ -17,10 +17,10 @@ metadata:
 ---
 
 # kubectl
-- **Bağlam:** `kubectl config current-context`, ns: `kubectl get ns`
-- **Kaynaklar:** `kubectl get pods -A`, `kubectl get svc,deploy`
-- **Detay:** `kubectl describe pod <ad>`
-- **Log:** `kubectl logs -f <pod> [-c container]`
-- **İçine gir:** `kubectl exec -it <pod> -- sh`
-- **Uygula:** `kubectl apply -f manifest.yaml`; sil `kubectl delete -f manifest.yaml`
-- **Ölçekle:** `kubectl scale deploy/<ad> --replicas=3`
+- **Context:** `kubectl config current-context`, ns: `kubectl get ns`
+- **Resources:** `kubectl get pods -A`, `kubectl get svc,deploy`
+- **Detail:** `kubectl describe pod <name>`
+- **Logs:** `kubectl logs -f <pod> [-c container]`
+- **Exec:** `kubectl exec -it <pod> -- sh`
+- **Apply:** `kubectl apply -f manifest.yaml`; delete `kubectl delete -f manifest.yaml`
+- **Scale:** `kubectl scale deploy/<name> --replicas=3`

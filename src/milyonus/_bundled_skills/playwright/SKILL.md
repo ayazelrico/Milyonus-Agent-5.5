@@ -1,6 +1,6 @@
 ---
 name: playwright
-description: Playwright ile tarayıcı otomasyonu ve E2E test
+description: Browser automation and E2E testing with Playwright
 version: 1.0.0
 platforms:
 - macos
@@ -12,21 +12,19 @@ metadata:
     - test
     - browser
     - e2e
-    category: gelistirme
+    category: development
     requires_toolsets:
     - terminal
     provenance: official
 ---
 
-# Playwright (tarayıcı otomasyonu / E2E)
-
-## Kurulum
+# Playwright (browser automation / E2E)
+## Install
 ```bash
 pip install playwright && playwright install chromium
-# veya JS: npm i -D @playwright/test && npx playwright install
+# or JS: npm i -D @playwright/test && npx playwright install
 ```
-
-## Betik (Python, async)
+## Script (Python, async)
 ```python
 from playwright.async_api import async_playwright
 
@@ -40,17 +38,15 @@ async with async_playwright() as p:
     print(await page.title())
     await browser.close()
 ```
-
-## Seçiciler & aksiyonlar
-- **Rol tabanlı (önerilen):** `page.get_by_role("button", name="Gönder")`.
-- **Metin/etiket:** `get_by_text`, `get_by_label`, `get_by_placeholder`.
-- **Aksiyon:** `click`, `fill`, `type`, `check`, `select_option`, `hover`.
-- **Bekleme:** otomatik; `wait_for_selector` / `expect(...).to_be_visible()` ile netleştir.
-
-## Hata ayıklama
+## Selectors & actions
+- **Role-based (preferred):** `page.get_by_role("button", name="Submit")`.
+- **Text/label:** `get_by_text`, `get_by_label`, `get_by_placeholder`.
+- **Actions:** `click`, `fill`, `type`, `check`, `select_option`, `hover`.
+- **Waiting:** automatic; make it explicit with `wait_for_selector` / `expect(...).to_be_visible()`.
+## Debugging
 ```bash
-npx playwright test --headed --debug     # görünür + adım adım
-npx playwright test --trace on           # trace kaydı → trace.zip
+npx playwright test --headed --debug     # visible + step through
+npx playwright test --trace on           # trace recording -> trace.zip
 npx playwright show-trace trace.zip
 ```
-- Ekran görüntüsü: `page.screenshot(path="s.png")`; kırıldığında delil olur.
+- Screenshot: `page.screenshot(path="s.png")`; useful evidence on failure.

@@ -1,6 +1,6 @@
 ---
 name: tar-archive
-description: tar ve sıkıştırma araçlarıyla arşivleme
+description: Archiving with tar and compression tools
 version: 1.0.0
 platforms:
 - macos
@@ -9,18 +9,18 @@ metadata:
   milyonusagentskill:
     tags:
     - tar
-    - arşiv
+    - archive
     - backup
-    category: sistem
+    category: system
     requires_toolsets:
     - terminal
     provenance: official
 ---
 
-# tar & sıkıştırma
-- **Oluştur:** `tar -czf arsiv.tar.gz dizin/` (gzip)
-- **Aç:** `tar -xzf arsiv.tar.gz`
-- **Listele:** `tar -tzf arsiv.tar.gz`
-- **zstd (hızlı):** `tar --zstd -cf arsiv.tar.zst dizin/`
-- **Belirli dosya çıkar:** `tar -xzf arsiv.tar.gz yol/dosya`
-- **Hariç tut:** `tar -czf a.tgz dizin --exclude='*.log'`
+# tar & compression
+- **Create:** `tar -czf archive.tar.gz dir/` (gzip)
+- **Extract:** `tar -xzf archive.tar.gz`
+- **List:** `tar -tzf archive.tar.gz`
+- **zstd (fast):** `tar --zstd -cf archive.tar.zst dir/`
+- **Extract one file:** `tar -xzf archive.tar.gz path/file`
+- **Exclude:** `tar -czf a.tgz dir --exclude='*.log'`

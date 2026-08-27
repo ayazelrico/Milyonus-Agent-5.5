@@ -1,6 +1,6 @@
 ---
 name: python-uv
-description: uv ile Python proje, sanal ortam ve bağımlılık yönetimi
+description: Manage Python projects, venvs and deps with uv
 version: 1.0.0
 platforms:
 - macos
@@ -10,16 +10,16 @@ metadata:
     tags:
     - python
     - uv
-    category: gelistirme
+    category: development
     requires_toolsets:
     - terminal
     provenance: official
 ---
 
 # Python + uv
-- **Proje başlat:** `uv init` ; Python sabitle `uv python pin 3.12`
-- **Bağımlılık:** `uv add paket` ; geliştirme `uv add --dev pytest`
-- **Senkron:** `uv sync` (kilitli ortamı kur)
-- **Çalıştır:** `uv run python script.py` / `uv run pytest`
-- **Araç kur:** `uv tool install ruff`
-- **Kilitle:** `uv lock`
+- **Init project:** `uv init` ; pin Python `uv python pin 3.12`
+- **Deps:** `uv add package` ; dev `uv add --dev pytest`
+- **Sync:** `uv sync` (install the locked env)
+- **Run:** `uv run python script.py` / `uv run pytest`
+- **Install a tool:** `uv tool install ruff`
+- **Lock:** `uv lock`

@@ -1,6 +1,6 @@
 ---
 name: sqlite-basics
-description: SQLite komut satırı ile veri sorgulama
+description: Query data with the SQLite CLI
 version: 1.0.0
 platforms:
 - macos
@@ -10,16 +10,16 @@ metadata:
     tags:
     - sqlite
     - sql
-    category: veri
+    category: data
     requires_toolsets:
     - terminal
     provenance: official
 ---
 
 # SQLite
-- **Aç:** `sqlite3 veritabani.db`
-- **Tablolar:** `.tables` ; şema `.schema tablo`
-- **Sorgu:** `SELECT * FROM t LIMIT 10;`
-- **Biçim:** `.mode column`, `.headers on`
-- **İçe/dışa aktar:** `.import veri.csv tablo` / `.output cikti.csv`
-- **Yedek:** `.backup yedek.db`
+- **Open:** `sqlite3 database.db`
+- **Tables:** `.tables` ; schema `.schema table`
+- **Query:** `SELECT * FROM t LIMIT 10;`
+- **Format:** `.mode column`, `.headers on`
+- **Import/export:** `.import data.csv table` / `.output out.csv`
+- **Backup:** `.backup backup.db`

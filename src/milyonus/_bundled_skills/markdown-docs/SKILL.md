@@ -1,6 +1,6 @@
 ---
 name: markdown-docs
-description: Markdown ile temiz doküman ve README yazımı
+description: Write clean docs and READMEs in Markdown
 version: 1.0.0
 platforms:
 - macos
@@ -10,17 +10,17 @@ metadata:
     tags:
     - markdown
     - docs
-    category: yazim
+    category: writing
     requires_toolsets:
     - terminal
     provenance: official
 ---
 
-# Markdown Dokümantasyon
-- **Başlık:** `#`..`######` ; **vurgu** `**kalın**`, `*italik*`, `` `kod` ``
-- **Liste:** `-` madde, `1.` sıralı, girinti ile iç içe
-- **Kod bloğu:** ```` ```dil ... ``` ````
-- **Tablo:** `| A | B |` + `|---|---|`
-- **Bağlantı/görsel:** `[metin](url)`, `![alt](yol)`
-- **Uyarı kutusu (GFM):** `> [!NOTE]` / `> [!WARNING]`
-- README yapısı: başlık → ne/neden → kurulum → kullanım → lisans
+# Markdown Documentation
+- **Headings:** `#`..`######` ; **emphasis** `**bold**`, `*italic*`, `` `code` ``
+- **Lists:** `-` bullets, `1.` ordered, indent to nest
+- **Code block:** ```` ```lang ... ``` ````
+- **Table:** `| A | B |` + `|---|---|`
+- **Link/image:** `[text](url)`, `![alt](path)`
+- **Callout (GFM):** `> [!NOTE]` / `> [!WARNING]`
+- README structure: title -> what/why -> install -> usage -> license

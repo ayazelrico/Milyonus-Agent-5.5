@@ -1,6 +1,6 @@
 ---
 name: terraform
-description: Terraform ile altyapıyı kod olarak yönetme (plan/apply/state)
+description: Manage infrastructure as code with Terraform (plan/apply/state)
 version: 1.0.0
 platforms:
 - macos
@@ -18,30 +18,26 @@ metadata:
 ---
 
 # Terraform (Infrastructure as Code)
-
-## Temel döngü
+## Core loop
 ```bash
-terraform init      # sağlayıcıları/modülleri indir
-terraform fmt       # biçimlendir
-terraform validate  # doğrula
-terraform plan      # ne değişecek (uygulamadan önce OKU)
-terraform apply     # uygula (onay ister)
-terraform destroy   # kaynakları yok et
+terraform init      # download providers/modules
+terraform fmt       # format
+terraform validate  # validate
+terraform plan      # what will change (READ before applying)
+terraform apply     # apply (asks for confirmation)
+terraform destroy   # tear down resources
 ```
-
-## Yapı
-- `main.tf` kaynaklar, `variables.tf` girdiler, `outputs.tf` çıktılar, `terraform.tfvars` değerler.
-- **Kaynak:** `resource "aws_s3_bucket" "b" { bucket = var.name }`
-- **Değişken:** `variable "name" { type = string }` → `var.name`
-- **Çıktı:** `output "url" { value = aws_s3_bucket.b.website_endpoint }`
-- **Modül:** `module "vpc" { source = "./modules/vpc" }`
-
-## State (kritik)
-- State dosyası (`terraform.tfstate`) gerçek altyapının kaydıdır — **asla git'e commit etme**, secret içerir.
-- Takım için **remote backend** kullan (S3 + DynamoDB lock, Terraform Cloud).
-- `terraform state list` / `terraform import` mevcut kaynakları yönetime al.
-
-## Güvenli çalışma
-- Her zaman önce `plan` oku; `apply` çıktısını gözden geçir.
-- Ortamları workspace ile ayır: `terraform workspace new staging`.
-- Sağlayıcı sürümlerini `required_providers` ile pinle.
+## Structure
+- `main.tf` resources, `variables.tf` inputs, `outputs.tf` outputs, `terraform.tfvars` values.
+- **Resource:** `resource "aws_s3_bucket" "b" { bucket = var.name }`
+- **Variable:** `variable "name" { type = string }` -> `var.name`
+- **Output:** `output "url" { value = aws_s3_bucket.b.website_endpoint }`
+- **Module:** `module "vpc" { source = "./modules/vpc" }`
+## State (critical)
+- The state file (`terraform.tfstate`) records real infra — **never commit it**, it holds secrets.
+- For teams use a **remote backend** (S3 + DynamoDB lock, Terraform Cloud).
+- `terraform state list` / `terraform import` to manage existing resources.
+## Working safely
+- Always read `plan` first; review the `apply` output.
+- Separate environments with workspaces: `terraform workspace new staging`.
+- Pin provider versions with `required_providers`.

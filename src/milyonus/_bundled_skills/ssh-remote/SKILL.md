@@ -1,6 +1,6 @@
 ---
 name: ssh-remote
-description: SSH ve scp/rsync ile uzak sunucu işlemleri
+description: Remote server operations with SSH and scp/rsync
 version: 1.0.0
 platforms:
 - macos
@@ -11,16 +11,16 @@ metadata:
     - ssh
     - rsync
     - scp
-    category: sistem
+    category: system
     requires_toolsets:
     - terminal
     provenance: official
 ---
 
-# SSH & Dosya Aktarımı
-- **Bağlan:** `ssh kullanici@host` ; port `-p 2222`
-- **Kopyala:** `scp dosya kullanici@host:/yol/`
-- **Senkron (verimli):** `rsync -avz --progress dizin/ kullanici@host:/yol/`
-- **Anahtar:** `ssh-keygen -t ed25519` ; kopyala `ssh-copy-id kullanici@host`
-- **Tünel:** `ssh -L 8080:localhost:80 kullanici@host`
-- **Config:** `~/.ssh/config` içinde `Host` takma adları tanımla
+# SSH & File Transfer
+- **Connect:** `ssh user@host` ; port `-p 2222`
+- **Copy:** `scp file user@host:/path/`
+- **Sync (efficient):** `rsync -avz --progress dir/ user@host:/path/`
+- **Keys:** `ssh-keygen -t ed25519` ; copy `ssh-copy-id user@host`
+- **Tunnel:** `ssh -L 8080:localhost:80 user@host`
+- Define `Host` aliases in `~/.ssh/config`

@@ -1,6 +1,6 @@
 ---
 name: regex-guide
-description: Yaygın regex desenleri ve grep/sed kullanımı
+description: Common regex patterns and grep/sed usage
 version: 1.0.0
 platforms:
 - macos
@@ -11,17 +11,17 @@ metadata:
     - regex
     - grep
     - sed
-    category: gelistirme
+    category: development
     requires_toolsets:
     - terminal
     provenance: official
 ---
 
-# Regex Rehberi
-- **Karakter:** `\d` rakam, `\w` kelime, `\s` boşluk, `.` herhangi
-- **Nicelik:** `*` 0+, `+` 1+, `?` 0/1, `{2,4}` aralık
-- **Sınır:** `^` başı, `$` sonu, `\b` kelime sınırı
-- **Grup:** `(abc)` ; alternatif `a|b` ; sınıf `[a-z]`
-- **grep:** `grep -E "desen"` (genişletilmiş), `-o` sadece eşleşen
-- **sed değiştir:** `sed -E 's/(eski)/[\1]/g' dosya`
-- E-posta kaba: `[\w.-]+@[\w.-]+\.\w+`
+# Regex Guide
+- **Classes:** `\d` digit, `\w` word, `\s` space, `.` any
+- **Quantifiers:** `*` 0+, `+` 1+, `?` 0/1, `{2,4}` range
+- **Anchors:** `^` start, `$` end, `\b` word boundary
+- **Group:** `(abc)` ; alternation `a|b` ; class `[a-z]`
+- **grep:** `grep -E "pattern"` (extended), `-o` only the match
+- **sed replace:** `sed -E 's/(old)/[\1]/g' file`
+- Rough email: `[\w.-]+@[\w.-]+\.\w+`
