@@ -53,3 +53,18 @@ def ensure_layout() -> Path:
     for sub in (memory_dir(), skills_dir(), logs_dir()):
         sub.mkdir(mode=0o700, parents=True, exist_ok=True)
     return root
+
+
+def introduced_marker() -> Path:
+    return data_root() / ".introduced"
+
+
+def is_first_run() -> bool:
+    """True until the agent has introduced itself once."""
+    return not introduced_marker().exists()
+
+
+def mark_introduced() -> None:
+    m = introduced_marker()
+    m.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    m.touch()

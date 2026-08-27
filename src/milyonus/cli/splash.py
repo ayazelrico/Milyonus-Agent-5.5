@@ -137,5 +137,37 @@ def render_splash(
             info.append(f"  ·  session {session}", style=PALETTE["chrome_500"])
         console.print(info)
     if workspace:
-        console.print(f"{indent} [dim]workspace: {workspace}  ·  /help for commands  ·  Ctrl+D to exit[/]")
+        console.print(
+            f"{indent} [dim]workspace: {workspace}  ·  /help for commands  ·  Ctrl+D to exit[/]"
+        )
     console.print()
+
+
+def render_intro(console: Console | None = None) -> None:
+    """A short self-introduction the agent shows on first launch."""
+    console = console or Console()
+    cy = PALETTE["cyan_400"]
+    chrome = PALETTE["chrome_200"]
+    muted = PALETTE["chrome_500"]
+    console.print(
+        f"[bold {cy}]Hi, I'm Milyonus Agent.[/]\n"
+        f"[{chrome}]A self-improving assistant that remembers across sessions, "
+        f"verifies what it learns, and turns solved tasks into reusable skills.[/]"
+    )
+    console.print(f"\n[{muted}]I can:[/]")
+    for line in (
+        "work with your files and run commands (risky ones ask first)",
+        "fetch and read from the web (SSRF-guarded)",
+        "remember facts you tell me — verified before they're stored",
+        'schedule recurring tasks ("every morning, …")',
+        "grow my own skills from what we do together",
+    ):
+        console.print(f"  [{cy}]•[/] {line}")
+    console.print(
+        f"\n[{muted}]Everything I remember is provenance-tracked and auditable "
+        f"([{chrome}]milyonus memory why <id>[/]).[/]"
+    )
+    console.print(
+        f"[{chrome}]Tell me what you'd like to do — or type [/]"
+        f"[bold {cy}]/help[/][{chrome}] for commands.[/]\n"
+    )

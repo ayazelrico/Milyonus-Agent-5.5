@@ -16,9 +16,10 @@ from prompt_toolkit.patch_stdout import patch_stdout
 from rich.console import Console
 
 from milyonus.brand import GLYPH, PALETTE, PROMPT
-from milyonus.cli.splash import render_splash
+from milyonus.cli.splash import render_intro, render_splash
 from milyonus.config.env import load_env
 from milyonus.config.loader import load_config
+from milyonus.config.paths import is_first_run, mark_introduced
 from milyonus.core.budget import Budget
 from milyonus.core.loop import AgentLoop
 from milyonus.core.store import SessionStore
@@ -154,6 +155,10 @@ async def _run_session(root: Path) -> int:
         session=sid,
         workspace=str(root),
     )
+    # On the very first launch, the agent introduces itself.
+    if is_first_run():
+        render_intro(console)
+        mark_introduced()
 
     async def on_text(chunk: str) -> None:
         console.print(chunk, end="", markup=False, highlight=False)
