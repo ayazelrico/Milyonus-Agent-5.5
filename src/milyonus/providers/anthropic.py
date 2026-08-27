@@ -110,8 +110,8 @@ class AnthropicProvider:
                 }
                 for t in request.tools
             ]
-        if request.temperature != 1.0:
-            payload["temperature"] = request.temperature
+        # Note: newer Anthropic models deprecate `temperature`; we omit it and
+        # let the model use its default. (OpenAI-compatible still honors it.)
         return payload
 
     async def stream(self, request: CompletionRequest) -> AsyncIterator[StreamEvent]:

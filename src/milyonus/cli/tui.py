@@ -32,6 +32,7 @@ from milyonus.proactive.tool import make_schedule_tool
 from milyonus.prompt.builder import build_system_prompt, skill_index_section
 from milyonus.providers.base import Message, ProviderError, ToolCall
 from milyonus.providers.router import build_provider
+from milyonus.research.tool import make_research_tools
 from milyonus.security.context_files import safe_context_sections
 from milyonus.security.risk import RiskEngine
 from milyonus.skills.engine import SkillEngine
@@ -140,6 +141,7 @@ async def _run_session(root: Path) -> int:
         make_email_tools(),
         make_browser_tools(),
         make_vision_tools(provider, root),
+        make_research_tools(provider),
     )
     risk_engine = RiskEngine()
 

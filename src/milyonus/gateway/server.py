@@ -33,6 +33,7 @@ from milyonus.memory.tool import make_memory_tools
 from milyonus.prompt.builder import build_system_prompt
 from milyonus.providers.base import Message, ProviderError, ToolCall
 from milyonus.providers.router import build_provider
+from milyonus.research.tool import make_research_tools
 from milyonus.security.risk import RiskEngine
 from milyonus.tools.browser.tools import make_browser_tools
 from milyonus.tools.email.tools import make_email_tools
@@ -102,6 +103,8 @@ class GatewayServer:
         for t in make_browser_tools():
             reg.register(t)
         for t in make_vision_tools(self.provider, self.workspace):
+            reg.register(t)
+        for t in make_research_tools(self.provider):
             reg.register(t)
         for t in mem_tools:
             reg.register(t)

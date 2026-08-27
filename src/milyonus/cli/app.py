@@ -84,6 +84,18 @@ def acp() -> None:
 
 
 @app.command()
+def research(
+    query: str = typer.Argument(..., help="The research question"),
+    sources: int = typer.Option(6, help="Max sources to read"),
+    subqueries: int = typer.Option(3, help="How many sub-queries to plan"),
+) -> None:
+    """Deep web research: plan, search, read sources, synthesize a cited report."""
+    from milyonus.cli.research_cmd import run_research
+
+    raise typer.Exit(code=run_research(query, sources=sources, subqueries=subqueries))
+
+
+@app.command()
 def chat() -> None:
     """Start an interactive terminal session (same as bare `milyonus`)."""
     from milyonus.cli.tui import run_tui
