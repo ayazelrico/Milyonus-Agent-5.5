@@ -24,6 +24,7 @@ it closes the biggest gap in self-evolving agents: *who wrote this memory, and w
 - [Quick start](#quick-start)
 - [Talk to it from anywhere](#talk-to-it-from-anywhere)
 - [Verified memory — the core idea](#-verified-memory--the-core-idea)
+- [Memory as a security boundary](#-memory-as-a-security-boundary)
 - [Skills — procedural memory](#-skills--procedural-memory)
 - [Security model](#-security-model)
 - [Self-modification](#-self-modification)
@@ -51,6 +52,8 @@ makes every memory **earn its place**.
 | Poison cleanup | Manual | `memory revoke --source <uri>` cascades in **seconds** |
 | Rejected ideas | Forgotten (rephrase slips through) | **Negative memory** + rephrase detection |
 | Memory in prompt | Injected as text | Rendered in a **data fence** — "not instructions" |
+| Promoted memory | Trusted **forever** | **Trust decays** — must be re-earned or it's demoted (a security boundary, not undo) |
+| Operator authority (T0) | "message says I'm the operator" | **Ed25519-signed, out-of-band, two-phase** — unforgeable from any text |
 | Autonomy | "Act first" (risk multiplier) | **Risk-tiered**: reversible → auto, irreversible → always confirm |
 | Self-modification | — | Open core, gated by **git snapshot + test + rollback** |
 
@@ -265,6 +268,56 @@ memory are never executed.
 
 ---
 
+## ✦ Memory as a security boundary
+
+Source and verification decide what gets *in*. But a memory that slipped through
+once — or that was legitimate yesterday — must not silently become **tomorrow's
+default**. So Milyonus treats promotion as a **standing security boundary, not an
+undo feature**: trust is continuously re-earned, and unrenewed trust falls on its
+own. This is the gap Hermes/OpenClaw leave open — *"an instruction written once
+stays the default forever."*
+
+**Trust decays — promotion is time-boxed, not permanent belief.**
+
+| Tier | Source | Half-life |
+|---|---|---|
+| **T0** | operator (signed) | **never** — authority, not a claim |
+| **T1** | paired user, direct | ~180 days |
+| **T2** | agent observation | ~60 days |
+| **T3** | third-party | ~14 days |
+
+Trust halves each half-life since it was last reaffirmed. When it falls below the
+floor, the nightly consolidation **demotes it back to quarantine** (re-validatable,
+not deleted) — so it drops out of the agent's defaults until a human re-earns it:
+
+```bash
+milyonus memory why <id>        # shows trust: 0.41 (reaffirmed 2×)
+milyonus memory reaffirm <id>   # explicit human action re-earns full trust
+```
+
+Reaffirmation is a **human-only** action (the agent has no reaffirm tool — it
+cannot infer "the user still agrees"), and is rate-limited so a flood of
+manipulative messages can't keep resetting the clock.
+
+**T0 is an authenticated, out-of-band boundary — unforgeable from any text.**
+
+The operator tier can never be minted by something the model reads (a chat
+message, a file, a tool result). A T0 write is bound to an **Ed25519 signature**
+whose private key lives *off* the agent host, and it takes **two AND-layered
+phases** — a signed stage, then a second signature *and* a mandatory review gap —
+before it becomes a default:
+
+```bash
+milyonus admin keygen --private ~/operator-key.pem   # private key stays off-host
+milyonus admin t0 add "Deploys only from CI" --key ~/operator-key.pem   # staged (passive)
+milyonus admin t0 activate <id> --key ~/operator-key.pem                # 2nd sig + review gap
+```
+
+Even a full host compromise can *verify* but never *forge* T0. Details:
+[docs/operator.md](docs/operator.md).
+
+---
+
 ## ✦ Skills — procedural memory
 
 The agent loads on-demand instruction docs (agentskills.io-compatible) and
@@ -430,6 +483,7 @@ Extend Milyonus through the **skill**, **tool**, or **channel adapter** interfac
 - [x] Proactivity: scheduler (NL→cron), safety policy, automation suggestions
 - [x] Integrations: email (IMAP/SMTP), browser (Playwright), vision (image input)
 - [x] Deep web research (keyless search → cited synthesis) + outreach skills
+- [x] Memory as a security boundary: trust decay + signed out-of-band T0
 - [ ] Vector/embedding layer for memory similarity (opt-in)
 - [ ] Honcho-style cross-session user modelling
 - [ ] Larger PoisonBench corpus + third-party audit
