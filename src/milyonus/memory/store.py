@@ -288,10 +288,13 @@ class MemoryStore:
                 "(rate limit prevents reaffirm floods)"
             )
         new_count = item.reaffirm_count + 1
-        if signal == "strong":
-            ceiling = 1.0
-        else:
-            ceiling = max(weak_floor, 1.0 - 0.1 * max(0, new_count - 3))
+        # Strong (operator-signed) restores full trust; weak reaffirms have
+        # diminishing returns after the 3rd, never falling below the floor.
+        ceiling = (
+            1.0
+            if signal == "strong"
+            else max(weak_floor, 1.0 - 0.1 * max(0, new_count - 3))
+        )
         interval = (now - item.last_reaffirmed_at) if item.last_reaffirmed_at else None
         self._conn.execute(
             "UPDATE memory SET trust_score=?, trust_ceiling=?, last_reaffirmed_at=?, "
