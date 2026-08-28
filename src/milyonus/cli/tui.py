@@ -153,6 +153,22 @@ async def _run_session(root: Path) -> int:
         make_vision_tools(provider, root),
         make_research_tools(provider),
     )
+
+    # External MCP servers (opt-in via config.mcp_servers). A failed server is
+    # reported and skipped; it never blocks the session.
+    from milyonus.tools.mcp.manager import MCPManager
+
+    mcp_manager = MCPManager(cfg.mcp_servers)
+    await mcp_manager.start()
+    n_mcp = mcp_manager.register_into(registry)
+    if n_mcp:
+        console.print(
+            f"[{PALETTE['blue_500']}]✦ MCP:[/] {n_mcp} tool(s) from "
+            f"{len(mcp_manager.connected)} server(s)"
+        )
+    for name, err in mcp_manager.errors.items():
+        console.print(f"[{PALETTE['warn']}]⚠ MCP server '{name}' unavailable:[/] {err}")
+
     risk_engine = RiskEngine()
 
     # Frozen L1 snapshot injected once at session start (PLAN §4.6).
@@ -262,6 +278,7 @@ async def _run_session(root: Path) -> int:
         turn += 1
         console.print()  # newline after streamed answer
 
+    await mcp_manager.close()
     store.close()
     mem_store.close()
     return 0

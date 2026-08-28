@@ -76,6 +76,9 @@ class GatewayServer:
         self.provider = build_provider(config.provider)
         self.risk = RiskEngine()
         self._sessions: dict[str, _UserSession] = {}
+        from milyonus.tools.mcp.manager import MCPManager
+
+        self.mcp = MCPManager(config.mcp_servers)
 
     def _authorized(self, msg: InboundMessage) -> bool:
         if self.config.security.gateway_allow_all_users:
@@ -116,6 +119,7 @@ class GatewayServer:
             reg.register(t)
         for t in mem_tools:
             reg.register(t)
+        self.mcp.register_into(reg)
 
         snapshot = build_snapshot(self.mem_store, config=self.config.memory)
         system = build_system_prompt(memory=snapshot)
@@ -190,6 +194,11 @@ class GatewayServer:
         """Run every adapter with automatic reconnection. A dropped connection
         (websocket close, network blip) restarts that adapter with capped
         exponential backoff instead of killing the whole gateway."""
+
+        # Connect external MCP servers once; failures are logged, not fatal.
+        await self.mcp.start()
+        for name, err in self.mcp.errors.items():
+            _log.warning("MCP server %r unavailable: %s", name, err)
 
         async def bind(adapter: ChannelAdapter) -> None:
             async def handler(m: InboundMessage) -> None:

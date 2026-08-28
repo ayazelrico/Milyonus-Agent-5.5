@@ -11,7 +11,7 @@ it closes the biggest gap in self-evolving agents: *who wrote this memory, and w
 [![License](https://img.shields.io/badge/license-Apache--2.0-1E4FD8.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12%2B-35C6F4.svg)](pyproject.toml)
 [![Version](https://img.shields.io/badge/version-5.5.0-071233.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-255%20passing-22C55E.svg)](tests)
+[![Tests](https://img.shields.io/badge/tests-261%20passing-22C55E.svg)](tests)
 [![PoisonBench](https://img.shields.io/badge/PoisonBench%20ASR-0%25-22C55E.svg)](docs/benchmarks.md)
 
 </div>
@@ -412,6 +412,35 @@ milyonus selfmod rollback [--to <tag>]
 
 ---
 
+## ✦ Connecting MCP servers
+
+Milyonus is an **MCP client**: declare any Model Context Protocol server in
+`config.toml` and its tools appear to the agent, namespaced `mcp_<name>_<tool>`.
+
+```toml
+[[mcp_servers]]
+name = "github"
+command = ["npx", "-y", "@modelcontextprotocol/server-github"]
+enabled = true
+risk = "caution"                    # every tool gated by the RiskEngine
+env_passthrough = ["GITHUB_TOKEN"]  # grant just this server its key
+```
+
+External servers are treated as **untrusted subprocesses**: the child gets a
+**filtered environment** (secret-looking vars are stripped unless you name them
+in `env_passthrough`), their output is **redacted**, and their tools default to
+`caution` so side effects hit the same approval path as everything else. A server
+that fails to start is **reported and skipped** — it never blocks the session or
+the other servers.
+
+```bash
+milyonus mcp list          # configured servers
+milyonus mcp tools [name]  # connect and list what each exposes
+milyonus mcp example       # a ready-to-paste config block
+```
+
+---
+
 ## Architecture
 
 ```
@@ -462,7 +491,8 @@ Details and methodology: [docs/benchmarks.md](docs/benchmarks.md) ·
 milyonus                     interactive session
 milyonus setup               first-run wizard
 milyonus doctor              environment diagnostics
-milyonus memory   list | pending | why | diff | revoke | search | consolidate
+milyonus memory   list | pending | why | diff | revoke | search | reaffirm | review | stats | reindex | consolidate
+milyonus mcp      list | tools | example   # external MCP servers
 milyonus skills   list | view | why
 milyonus audit    verify | log
 milyonus gateway  start | pair
@@ -510,7 +540,7 @@ Extend Milyonus through the **skill**, **tool**, or **channel adapter** interfac
 - [x] Verified-memory core · trust tiers · ledger · revocation
 - [x] Agent-authored skills + 26 bundled
 - [x] 6 surfaces (CLI, Telegram, WhatsApp, Slack, Discord, ACP)
-- [x] Self-modification harness · subagent delegation · MCP
+- [x] Self-modification harness · subagent delegation · MCP client **+ server config**
 - [x] Hardened Docker · automated PyPI + Docker Hub release
 - [x] Task-level evaluation & observability (success, tools, tokens, cost)
 - [x] Proactivity: scheduler (NL→cron), safety policy, automation suggestions

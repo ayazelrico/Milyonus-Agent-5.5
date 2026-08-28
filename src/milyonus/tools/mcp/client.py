@@ -80,7 +80,7 @@ class MCPClient:
         text = "\n".join(b.get("text", "") for b in blocks if b.get("type") == "text")
         return redact(text or json.dumps(result, ensure_ascii=False))
 
-    async def as_tools(self, *, prefix: str = "mcp") -> list[Tool]:
+    async def as_tools(self, *, prefix: str = "mcp", risk: str = "caution") -> list[Tool]:
         """Wrap the server's tools as Milyonus Tools (namespaced by prefix)."""
         tools: list[Tool] = []
         for spec in await self.list_tools():
@@ -95,7 +95,7 @@ class MCPClient:
                     description=spec.get("description", name),
                     parameters=spec.get("inputSchema", {"type": "object"}),
                     handler=handler,
-                    risk="caution",  # external servers are caution by default
+                    risk=risk,  # type: ignore[arg-type]
                 )
             )
         return tools

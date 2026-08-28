@@ -106,6 +106,29 @@ class TelemetryConfig(_Strict):
     enabled: bool = False
 
 
+class MCPServerConfig(_Strict):
+    """One external MCP (Model Context Protocol) server the agent may connect to.
+
+    Milyonus spawns the server as a stdio/JSON-RPC subprocess, lists its tools,
+    and exposes them to the model namespaced as `mcp_<name>_<tool>`. Third-party
+    servers are untrusted: the subprocess gets a *filtered* environment (secrets
+    are stripped unless named in `env_passthrough`), their output is redacted, and
+    their tools default to `caution` risk so the RiskEngine gates side effects.
+    """
+
+    name: str = Field(pattern=r"^[a-z0-9_]+$", min_length=1, max_length=40)
+    # argv to launch the stdio server, e.g. ["npx","-y","@modelcontextprotocol/server-github"].
+    command: list[str] = Field(min_length=1)
+    enabled: bool = True
+    # Env var names this specific server is allowed to receive. Secret-looking
+    # names (KEY/TOKEN/SECRET/PASSWORD/CREDENTIAL/AUTH) are stripped regardless,
+    # so grant a server its key only by naming it here deliberately.
+    env_passthrough: list[str] = Field(default_factory=list)
+    # Default risk applied to every tool this server exposes. "danger" forces an
+    # approval prompt on each call; use it for servers that write or reach out.
+    risk: Literal["safe", "caution", "danger"] = "caution"
+
+
 class MilyonusConfig(_Strict):
     """Top-level config, loaded from ~/.milyonus/config.toml."""
 
@@ -113,3 +136,5 @@ class MilyonusConfig(_Strict):
     memory: MemoryConfig = Field(default_factory=MemoryConfig)
     security: SecurityConfig = Field(default_factory=SecurityConfig)
     telemetry: TelemetryConfig = Field(default_factory=TelemetryConfig)
+    # External MCP servers to connect at startup. Empty by default (opt-in).
+    mcp_servers: list[MCPServerConfig] = Field(default_factory=list)
