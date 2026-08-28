@@ -11,7 +11,7 @@ it closes the biggest gap in self-evolving agents: *who wrote this memory, and w
 [![License](https://img.shields.io/badge/license-Apache--2.0-1E4FD8.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12%2B-35C6F4.svg)](pyproject.toml)
 [![Version](https://img.shields.io/badge/version-5.5.0-071233.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-244%20passing-22C55E.svg)](tests)
+[![Tests](https://img.shields.io/badge/tests-255%20passing-22C55E.svg)](tests)
 [![PoisonBench](https://img.shields.io/badge/PoisonBench%20ASR-0%25-22C55E.svg)](docs/benchmarks.md)
 
 </div>
@@ -57,7 +57,7 @@ makes every memory **earn its place**.
 | Autonomy | "Act first" (risk multiplier) | **Risk-tiered**: reversible → auto, irreversible → always confirm |
 | Self-modification | — | Open core, gated by **git snapshot + test + rollback** |
 
-> Measured on the built-in **PoisonBench** (45 cases): **ASR 0% · RSR 0% · 100% legitimate promotion** — see [docs/benchmarks.md](docs/benchmarks.md).
+> Measured on the built-in **PoisonBench**: single-shot held-out **ASR 0% · RSR 0% · 100% legitimate promotion**, plus **10/10 multi-step attack scenarios contained** (patient · distributed · T0-spoof · semantic · negative) — see [docs/benchmarks.md](docs/benchmarks.md).
 
 ---
 
@@ -519,7 +519,8 @@ Extend Milyonus through the **skill**, **tool**, or **channel adapter** interfac
 - [x] Memory as a security boundary: trust decay + signed out-of-band T0
 - [x] Vector/embedding layer for memory: trust-weighted semantic recall (hashing default, opt-in OpenAI)
 - [ ] Honcho-style cross-session user modelling
-- [ ] Larger PoisonBench corpus + third-party audit
+- [x] PoisonBench v3: multi-step scenarios (patient / distributed / T0-spoof / semantic), pinned as a regression gate
+- [ ] Like-for-like Hermes harness + third-party audit
 
 ---
 

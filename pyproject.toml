@@ -70,6 +70,9 @@ ignore = ["E501"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+# Put the repo root on sys.path so tests can import the out-of-tree `evals`
+# package (PoisonBench scenarios) alongside the installed `milyonus` package.
+pythonpath = ["."]
 
 [tool.mypy]
 python_version = "3.12"
