@@ -1,8 +1,12 @@
 # Milyonus Agent — developer convenience targets.
-.PHONY: sync test lint fmt check build docker-build docker-run poison safety
+.PHONY: sync test lint fmt check hooks build docker-build docker-run poison safety
 
-sync:        ## install deps
-	uv sync --extra dev --extra discord
+sync:        ## install deps (matches CI: dev + admin + discord)
+	uv sync --extra dev --extra admin --extra discord
+
+hooks:       ## enable the versioned git hooks (pre-push runs `make check`)
+	git config core.hooksPath .githooks
+	@echo "✓ git hooks enabled (.githooks). Pushes now run 'make check' first."
 
 test:        ## run the test suite
 	uv run pytest -q

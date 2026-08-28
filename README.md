@@ -554,10 +554,15 @@ Guides: [docs/docker.md](docs/docker.md) · [docs/production.md](docs/production
 ## Development
 
 ```bash
-uv sync --extra dev --extra discord
-uv run pytest -q            # 150 tests, green without an API key
-make check                 # lint + format-check + test
+make sync                  # deps (matches CI: dev + admin + discord)
+make hooks                 # enable pre-push gate (runs the CI checks locally)
+uv run pytest -q           # 269 tests, green without an API key
+make check                 # lint + format-check + test — exactly what CI runs
 ```
+
+`make check` mirrors CI one-for-one (`ruff check` · `ruff format --check` ·
+`pytest`); `make hooks` wires it into a pre-push hook so a push can't go out red
+(bypass with `git push --no-verify`).
 
 Extend Milyonus through the **skill**, **tool**, or **channel adapter** interfaces
 — the verified-memory core stays small and auditable. See

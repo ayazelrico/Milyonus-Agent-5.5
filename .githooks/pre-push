@@ -1,0 +1,14 @@
+#!/bin/sh
+# Milyonus pre-push gate — runs the exact CI checks (lint + format-check + test)
+# so a push can't go out red. Bypass in a pinch with:  git push --no-verify
+#
+# Enable once per clone:  make hooks   (or: git config core.hooksPath .githooks)
+
+set -e
+echo "✦ pre-push: running CI-parity checks (make check)…"
+if ! make check; then
+  echo ""
+  echo "✗ pre-push blocked: 'make check' failed. Fix it, or bypass with 'git push --no-verify'."
+  exit 1
+fi
+echo "✓ pre-push: all checks passed."

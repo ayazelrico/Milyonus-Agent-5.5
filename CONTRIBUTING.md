@@ -5,16 +5,20 @@ Thanks for helping build a memory-safe, self-improving agent.
 ## Development setup
 
 ```bash
-uv sync --extra dev
+make sync                  # deps (matches CI: dev + admin + discord)
+make hooks                 # enable the pre-push gate (runs the CI checks)
 uv run milyonus doctor
 uv run pytest -q
 ```
 
 ## Before you open a PR
 
-- `uv run ruff check src tests` — lint clean
-- `uv run ruff format src tests` — formatted
-- `uv run pytest -q` — tests green
+Run `make check` — it mirrors CI exactly (`ruff check` · `ruff format --check` ·
+`pytest`), so if it passes locally the pipeline will too. `make hooks` runs it
+automatically on every push (bypass with `git push --no-verify`).
+
+- `make check` — lint clean, **formatted** (CI runs `ruff format --check`, so an
+  unformatted file fails the build — run `make fmt` to fix), tests green
 - New behavior ships with tests. Security-relevant code ships with a test that
   fails if the guarantee is removed (see `tests/test_config.py`).
 
