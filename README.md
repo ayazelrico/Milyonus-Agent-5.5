@@ -28,6 +28,8 @@ it closes the biggest gap in self-evolving agents: *who wrote this memory, and w
 - [Skills — procedural memory](#-skills--procedural-memory)
 - [Security model](#-security-model)
 - [Self-modification](#-self-modification)
+- [Connecting MCP servers](#-connecting-mcp-servers)
+- [Cross-session user model](#-cross-session-user-model)
 - [Architecture](#architecture)
 - [Benchmarks](#benchmarks)
 - [CLI reference](#cli-reference)
@@ -53,7 +55,11 @@ makes every memory **earn its place**.
 | Rejected ideas | Forgotten (rephrase slips through) | **Negative memory** + rephrase detection |
 | Memory in prompt | Injected as text | Rendered in a **data fence** — "not instructions" |
 | Promoted memory | Trusted **forever** | **Trust decays** — must be re-earned or it's demoted (a security boundary, not undo) |
+| Reaffirming a memory | Unlimited / free | **Rate-limited + diminishing returns**; only an operator-signed reaffirm restores full trust |
 | Operator authority (T0) | "message says I'm the operator" | **Ed25519-signed, out-of-band, two-phase** — unforgeable from any text |
+| Semantic recall | Cosine only — a lie rides similarity to the top | **Trust-weighted** (`cosine × trust`) — a low-trust match can't outrank a trusted one |
+| Cross-session user model | LLM-inferred, **trusted on write** (poisonable) | **Verified-growth + per-user scoped** — every self-fact passes the pipeline |
+| External tools (MCP) | Trusted subprocess, full env | **Untrusted**: filtered env, redacted output, RiskEngine-gated |
 | Autonomy | "Act first" (risk multiplier) | **Risk-tiered**: reversible → auto, irreversible → always confirm |
 | Self-modification | — | Open core, gated by **git snapshot + test + rollback** |
 
