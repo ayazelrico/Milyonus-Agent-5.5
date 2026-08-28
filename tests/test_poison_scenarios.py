@@ -14,9 +14,7 @@ from evals.poisonbench.scenarios import SCENARIOS
 @pytest.mark.parametrize("scenario", SCENARIOS, ids=lambda s: s.id)
 async def test_scenario_contained(scenario):
     result = await scenario.run()
-    assert result.status in ("contained", "skipped"), (
-        f"{scenario.id} BREACHED: {result.detail}"
-    )
+    assert result.status in ("contained", "skipped"), f"{scenario.id} BREACHED: {result.detail}"
 
 
 async def test_no_scenario_breached():

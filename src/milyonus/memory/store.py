@@ -290,11 +290,7 @@ class MemoryStore:
         new_count = item.reaffirm_count + 1
         # Strong (operator-signed) restores full trust; weak reaffirms have
         # diminishing returns after the 3rd, never falling below the floor.
-        ceiling = (
-            1.0
-            if signal == "strong"
-            else max(weak_floor, 1.0 - 0.1 * max(0, new_count - 3))
-        )
+        ceiling = 1.0 if signal == "strong" else max(weak_floor, 1.0 - 0.1 * max(0, new_count - 3))
         interval = (now - item.last_reaffirmed_at) if item.last_reaffirmed_at else None
         self._conn.execute(
             "UPDATE memory SET trust_score=?, trust_ceiling=?, last_reaffirmed_at=?, "
@@ -485,6 +481,17 @@ class MemoryStore:
 
     def active(self, *, limit: int = 200) -> list[MemoryItem]:
         return self.by_state("active", limit=limit)
+
+    def active_by_actor(self, actor: str, *, limit: int = 200) -> list[MemoryItem]:
+        """Active memory attributed to one user (provenance.actor). This is the
+        per-user scoping the cross-session user model is built on — it keeps one
+        user's profile out of another's view in a multi-user gateway."""
+        rows = self._conn.execute(
+            "SELECT * FROM memory WHERE state='active' AND actor=? "
+            "ORDER BY created_at DESC LIMIT ?",
+            (actor, limit),
+        ).fetchall()
+        return [self._row_to_item(r) for r in rows]
 
     def find_similar_active(self, content: str, source_kind: SourceKind) -> MemoryItem | None:
         """Exact-content dedup within active memory (embedding-based similarity

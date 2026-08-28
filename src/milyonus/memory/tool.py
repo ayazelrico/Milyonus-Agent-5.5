@@ -58,14 +58,34 @@ def make_memory_tools(
             recalls = await asyncio.to_thread(sem.recall, query)
             if recalls:
                 return "\n".join(
-                    f"[{r.item.trust_tier}] {r.item.content}  (~{r.score:.2f})"
-                    for r in recalls
+                    f"[{r.item.trust_tier}] {r.item.content}  (~{r.score:.2f})" for r in recalls
                 )
         q = query.casefold()
         hits = [m for m in pipeline.store.active() if q in m.content.casefold()]
         if not hits:
             return "no matching memory"
         return "\n".join(f"[{m.trust_tier}] {m.content}" for m in hits[:20])
+
+    async def user_recall(args: dict[str, Any]) -> str:
+        # Dialectic query over the CURRENT user's cross-session model only —
+        # trust-weighted and scoped by user, so it never surfaces another user.
+        question = args.get("query", "").strip()
+        if not question or user_ref is None:
+            return "no user model available"
+        from milyonus.memory.usermodel import UserModel
+
+        sem = getattr(pipeline, "semantic", None)
+        model = UserModel(
+            pipeline.store,
+            user_ref=user_ref,
+            config=pipeline.config,
+            semantic=sem,
+            pipeline=pipeline,
+        )
+        hits = model.ask(question)
+        if not hits:
+            return "nothing known about the user for that"
+        return "\n".join(f"[{m.trust_tier} ~{score:.2f}] {m.content}" for m, score in hits)
 
     return [
         Tool(
@@ -98,6 +118,23 @@ def make_memory_tools(
                 "required": ["query"],
             },
             handler=search,
+            risk="safe",
+        ),
+        Tool(
+            name="user_recall",
+            description=(
+                "Ask what is known about the CURRENT user from their cross-session "
+                "model (preferences, facts, patterns). Trust-weighted and scoped to "
+                "this user only. Use it to personalize before assuming."
+            ),
+            parameters={
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "What to recall about the user"}
+                },
+                "required": ["query"],
+            },
+            handler=user_recall,
             risk="safe",
         ),
     ]

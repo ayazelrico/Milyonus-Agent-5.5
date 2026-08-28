@@ -187,8 +187,7 @@ def memory_reindex() -> None:
         raise typer.Exit()
     n = sem.reindex()
     console.print(
-        f"[{PALETTE['ok']}]{GLYPH} indexed {n} memories[/] "
-        f"[dim]({sem.embedder.signature})[/]"
+        f"[{PALETTE['ok']}]{GLYPH} indexed {n} memories[/] [dim]({sem.embedder.signature})[/]"
     )
 
 

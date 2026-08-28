@@ -11,7 +11,7 @@ it closes the biggest gap in self-evolving agents: *who wrote this memory, and w
 [![License](https://img.shields.io/badge/license-Apache--2.0-1E4FD8.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12%2B-35C6F4.svg)](pyproject.toml)
 [![Version](https://img.shields.io/badge/version-5.5.0-071233.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-261%20passing-22C55E.svg)](tests)
+[![Tests](https://img.shields.io/badge/tests-269%20passing-22C55E.svg)](tests)
 [![PoisonBench](https://img.shields.io/badge/PoisonBench%20ASR-0%25-22C55E.svg)](docs/benchmarks.md)
 
 </div>
@@ -441,6 +441,35 @@ milyonus mcp example       # a ready-to-paste config block
 
 ---
 
+## ✦ Cross-session user model
+
+The agent keeps a persistent, evolving representation of each user that survives
+across sessions — preferences, facts, patterns — in the spirit of Honcho's
+"theory of mind." Milyonus closes that idea's biggest hole: **a freely-written,
+LLM-inferred user model is a poisoning target.** So here the user model *is* the
+verified-memory store, scoped to one user:
+
+- **Grows through the pipeline.** At session end the agent reflects on the user's
+  own messages and *proposes* durable self-facts — each is quarantined and
+  promoted only if it passes verification. Nothing about who the user "is" is
+  trusted on write, so a manipulative message can't rewrite it.
+- **Scoped per user.** Reads are filtered by provenance, so in a multi-user
+  gateway one person's model never leaks into another's session — real isolation,
+  not just focus.
+- **Decays.** It rides the same items, so the trust-decay boundary applies: a
+  stale claim about the user falls out until reaffirmed.
+
+The agent has a `user_recall` tool for a **dialectic query** — "what do we know
+about this user re: X" — trust-weighted and user-scoped. From the CLI:
+
+```bash
+milyonus user show              # the durable, trust-ranked model
+milyonus user ask "editor"      # dialectic query
+milyonus user observe "prefers dark mode"   # propose (verified, not written)
+```
+
+---
+
 ## Architecture
 
 ```
@@ -493,6 +522,7 @@ milyonus setup               first-run wizard
 milyonus doctor              environment diagnostics
 milyonus memory   list | pending | why | diff | revoke | search | reaffirm | review | stats | reindex | consolidate
 milyonus mcp      list | tools | example   # external MCP servers
+milyonus user     show | ask | observe      # cross-session user model
 milyonus skills   list | view | why
 milyonus audit    verify | log
 milyonus gateway  start | pair
@@ -548,7 +578,7 @@ Extend Milyonus through the **skill**, **tool**, or **channel adapter** interfac
 - [x] Deep web research (keyless search → cited synthesis) + outreach skills
 - [x] Memory as a security boundary: trust decay + signed out-of-band T0
 - [x] Vector/embedding layer for memory: trust-weighted semantic recall (hashing default, opt-in OpenAI)
-- [ ] Honcho-style cross-session user modelling
+- [x] Honcho-style cross-session user model — per-user scoped, verified-growth, dialectic recall
 - [x] PoisonBench v3: multi-step scenarios (patient / distributed / T0-spoof / semantic), pinned as a regression gate
 - [ ] Like-for-like Hermes harness + third-party audit
 

@@ -129,9 +129,7 @@ async def _run_session(root: Path) -> int:
         semantic = SemanticMemory(mem_store, config=cfg.memory)
     except Exception:
         semantic = None
-    pipeline = MemoryPipeline(
-        mem_store, config=cfg.memory, verifier=verifier, semantic=semantic
-    )
+    pipeline = MemoryPipeline(mem_store, config=cfg.memory, verifier=verifier, semantic=semantic)
 
     store = SessionStore()
     sid = store.create_session("cli", user_ref="local")
@@ -172,7 +170,7 @@ async def _run_session(root: Path) -> int:
     risk_engine = RiskEngine()
 
     # Frozen L1 snapshot injected once at session start (PLAN §4.6).
-    snapshot = build_snapshot(mem_store, config=cfg.memory)
+    snapshot = build_snapshot(mem_store, config=cfg.memory, user_ref="local")
     skills_section = skill_index_section(skill_engine.list_level0())
 
     # Scan repo context files (AGENTS.md, .cursorrules, …); inject only clean
@@ -277,6 +275,23 @@ async def _run_session(root: Path) -> int:
         store.append_message(sid, turn=turn, role="assistant", content=answer)
         turn += 1
         console.print()  # newline after streamed answer
+
+    # Cross-session user model: reflect on this session's user messages and
+    # propose durable self-facts through the pipeline (verified, not trusted).
+    try:
+        from milyonus.memory.usermodel import UserModel
+
+        user_msgs = [m.content for m in history if m.role == "user"]
+        if user_msgs:
+            model = UserModel(mem_store, user_ref="local", config=cfg.memory, pipeline=pipeline)
+            counts = await model.reflect(user_msgs)
+            if counts["active"]:
+                console.print(
+                    f"[{PALETTE['chrome_500']}]✦ learned {counts['active']} thing(s) "
+                    f"about you this session[/]"
+                )
+    except Exception:  # noqa: BLE001 - reflection must never break shutdown
+        pass
 
     await mcp_manager.close()
     store.close()

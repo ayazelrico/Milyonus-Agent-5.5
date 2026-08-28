@@ -149,7 +149,7 @@ class ACPServer:
         for t in mem_tools:
             reg.register(t)
 
-        snapshot = build_snapshot(self.mem_store, config=self.config.memory)
+        snapshot = build_snapshot(self.mem_store, config=self.config.memory, user_ref="editor")
         system = build_system_prompt(memory=snapshot)
 
         async def on_text(chunk: str) -> None:

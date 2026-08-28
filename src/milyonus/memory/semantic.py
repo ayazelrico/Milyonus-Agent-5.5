@@ -91,9 +91,11 @@ class SemanticMemory:
 
     # --- recall ---------------------------------------------------------
 
-    def recall(self, query: str, *, k: int | None = None) -> list[Recall]:
+    def recall(self, query: str, *, k: int | None = None, actor: str | None = None) -> list[Recall]:
         """Trust-weighted semantic recall over active memory. Empty list if
-        embeddings are disabled (caller falls back to lexical search)."""
+        embeddings are disabled (caller falls back to lexical search). When
+        `actor` is given, recall is scoped to that user's memory (cross-session
+        user model) so one user's profile never leaks into another's answer."""
         if not self.enabled:
             return []
         k = k or self.config.vector_recall_k
@@ -101,7 +103,8 @@ class SemanticMemory:
             qvec = self.embedder.embed([query])[0]
         except Exception:  # noqa: BLE001 - degrade to lexical
             return []
-        active = {m.id: m for m in self.store.active()}
+        items = self.store.active_by_actor(actor) if actor is not None else self.store.active()
+        active = {m.id: m for m in items}
         # Over-fetch by cosine, then re-rank by cosine*trust and take top-k.
         hits = self.index.search(
             qvec,

@@ -39,11 +39,22 @@ def _is_user_profile(item: MemoryItem) -> bool:
     return item.provenance.source_kind in ("user-direct", "operator")
 
 
-def build_snapshot(store: MemoryStore, *, config: MemoryConfig | None = None) -> MemorySnapshot:
+def build_snapshot(
+    store: MemoryStore,
+    *,
+    config: MemoryConfig | None = None,
+    user_ref: str | None = None,
+) -> MemorySnapshot:
+    """Build the frozen L1 snapshot. When `user_ref` is given, the user-profile
+    half is scoped to that user's memory (cross-session user model + multi-user
+    isolation); agent notes stay global. Without it, behavior is unchanged."""
     config = config or MemoryConfig()
     active = store.active()
-    user_items = [m for m in active if _is_user_profile(m)]
     agent_items = [m for m in active if not _is_user_profile(m)]
+    if user_ref is not None:
+        user_items = [m for m in store.active_by_actor(user_ref) if _is_user_profile(m)]
+    else:
+        user_items = [m for m in active if _is_user_profile(m)]
     return MemorySnapshot(
         user_profile=_pack(user_items, config.user_profile_chars),
         agent_notes=_pack(agent_items, config.agent_profile_chars),

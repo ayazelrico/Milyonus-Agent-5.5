@@ -92,9 +92,7 @@ class GatewayServer:
         return self._sessions.setdefault(self._session_key(msg), _UserSession())
 
     def _build_loop(self, adapter: ChannelAdapter, msg: InboundMessage) -> AgentLoop:
-        pipeline = MemoryPipeline(
-            self.mem_store, config=self.config.memory, semantic=self.semantic
-        )
+        pipeline = MemoryPipeline(self.mem_store, config=self.config.memory, semantic=self.semantic)
         # Group content is lower trust; memory proposals from groups are T3.
         default_source = "third-party" if msg.is_group else "agent-observed"
         mem_tools = make_memory_tools(
@@ -121,7 +119,7 @@ class GatewayServer:
             reg.register(t)
         self.mcp.register_into(reg)
 
-        snapshot = build_snapshot(self.mem_store, config=self.config.memory)
+        snapshot = build_snapshot(self.mem_store, config=self.config.memory, user_ref=msg.user_id)
         system = build_system_prompt(memory=snapshot)
 
         async def approve(call: ToolCall, risk: str) -> bool:
